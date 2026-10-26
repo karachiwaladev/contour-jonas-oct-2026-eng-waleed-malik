@@ -52,6 +52,7 @@ Each project lives in its own top-level folder. Add a row here whenever one is c
 - **New project = new top-level folder** `<project-slug>/` (use the name the ticket gives) with a
   `README.md`, plus a row in the index.
   Never mix two projects in one folder.
-- **Commits**: subject starts with the ticket, e.g. `Ticket #2: Add factory CLAUDE.md`; push to `main`.
+- **Commits**: subject starts with the ticket, e.g. `Ticket #2: Add factory CLAUDE.md`. Builds go on a
+  `ticket-<N>-*` branch + PR that the author approves before merge; everything else pushes to `main`.
 - **Unclear ticket**: ask on the GitHub issue, not in chat, then move on to the next ticket.
 - Training repo only: no Jonas or Contour code, no real keys or secrets.

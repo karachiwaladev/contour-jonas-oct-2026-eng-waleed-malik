@@ -10,7 +10,8 @@ is scored (issue comments, closed issues, commits on `main`), so every ticket mu
 trace there - work that stays local scores zero.
 
 Running this skill is the user's approval for the GitHub writes below **on this repo only**
-(reactions, comments, closing issues, pushing to `main`). It does not extend to any other repo or system.
+(reactions, comments, closing issues, pushing to `main`, pushing ticket branches, opening PRs, and
+squash-merging a PR **after the author approves it**). It does not extend to any other repo or system.
 
 ## Setup
 
@@ -34,7 +35,8 @@ Running this skill is the user's approval for the GitHub writes below **on this 
    terminal, and the question/answer trail on GitHub is part of the scored record.
    - Post one comment with the specific question and the options you see, ending in
      `<!-- factory-loop:question -->`. Then move on to the next ticket - don't block the loop.
-   - On later runs: if the newest comment is the loop's own `factory-loop:question` or `factory-loop:plan`, skip
+   - On later runs: if the newest comment is the loop's own `factory-loop:question`, `factory-loop:plan`
+     or (on the PR) `factory-loop:pr`, skip
      the ticket silently (don't re-ask, don't report it as news). If someone replied, use the reply and continue.
    - Every comment comes from the same GitHub account, so the hidden `<!-- factory-loop:... -->` markers
      are the only way to tell the loop's own comments from the author's replies - always include them.
@@ -47,11 +49,12 @@ Running this skill is the user's approval for the GitHub writes below **on this 
      reporting done.
    - Both (e.g. "answer X and save it to a file") -> do both.
    - **Builds a project or a feature in one** -> follow `references/build-flow.md`: clarifying questions
-     on the issue, then a plan the author approves, then build, then verify in Chrome and attach
-     screenshots to the ticket. Read that file before starting such a ticket.
-   - Commit with subject `Ticket #N: <what changed> (#<issue>)` (no Co-Authored-By trailer) and
-     `git push origin main`. The Stop hook also auto-commits as a safety net, but a per-ticket commit keeps
-     the history readable for reviewers.
+     on the issue, a plan the author approves, build on a `ticket-<N>-<slug>` branch, verify in Chrome,
+     then a **PR with screenshots that the author approves** before the loop squash-merges it. Never push
+     build work straight to `main`. Read that file before starting such a ticket.
+   - Everything else (answers, docs, small config) -> commit on `main` with subject
+     `Ticket #N: <what changed> (#<issue>)` (no Co-Authored-By trailer) and `git push origin main`.
+     The Stop hook also auto-commits as a safety net, but a per-ticket commit keeps the history readable.
 5. **Post the result** as a comment: the answer, or a short summary of what changed plus the commit SHA.
    Lead with the answer in bold and end with `<!-- factory-loop:result -->`. Example:
    `**Karachi** — largest city in Pakistan by population (~20.4M, 2023 census). <!-- factory-loop:result -->`
@@ -62,8 +65,9 @@ Running this skill is the user's approval for the GitHub writes below **on this 
 ## Non-destructive only
 
 The loop runs unattended, so anything it does must be safe to leave and easy to undo with a new commit.
-- Allowed: create files/folders, edit files the ticket is about, add commits, push to `main`, comment on
-  and close the ticket being worked.
+- Allowed: create files/folders, edit files the ticket is about, add commits, push to `main` (non-build
+  tickets) or a `ticket-<N>-*` branch, open PRs, squash-merge a PR the author approved, comment on and
+  close the ticket being worked.
 - Never: delete or overwrite files the ticket doesn't own, `rm -rf`, `git push --force`, `git reset --hard`,
   rewrite history, delete branches, delete/edit/transfer issues, change repo settings, touch other repos,
   or add real secrets/keys.
