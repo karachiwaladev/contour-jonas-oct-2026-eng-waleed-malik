@@ -1,10 +1,39 @@
 // Pure task logic, kept free of DOM and IndexedDB so it can be unit-tested with `node --test`.
+import { normalizeRepeat, nextDueDate } from "./recurrence.js";
 
 export const STATUSES = ["all", "active", "completed"];
 
-// Tasks saved before due dates/tags existed have neither field; treat them as empty.
+// Tasks saved before due dates/tags/repeat existed lack those fields; treat them as empty.
 export function normalize(task) {
-  return { ...task, dueDate: task.dueDate || null, tags: Array.isArray(task.tags) ? task.tags : [] };
+  return {
+    ...task,
+    dueDate: task.dueDate || null,
+    tags: Array.isArray(task.tags) ? task.tags : [],
+    repeat: normalizeRepeat(task.repeat),
+  };
+}
+
+// Rules for a task's repeat on create/edit: a recurring task must have a date (today if none),
+// and monthly remembers its day-of-month so the 31st survives shorter months.
+export function applyRepeat({ dueDate, repeat }, today) {
+  const r = normalizeRepeat(repeat);
+  if (!r) return { dueDate: dueDate || null, repeat: null };
+  const date = dueDate || today;
+  if (r.freq === "monthly") r.anchorDay = r.anchorDay || Number(date.slice(8, 10));
+  return { dueDate: date, repeat: r };
+}
+
+// The copy created when a recurring task is ticked done; null for one-off tasks.
+export function nextOccurrence(task, today, now = Date.now()) {
+  if (!task.repeat || !task.dueDate) return null;
+  return {
+    title: task.title,
+    done: false,
+    dueDate: nextDueDate(task.dueDate, task.repeat, today),
+    tags: [...task.tags],
+    repeat: { ...task.repeat },
+    createdAt: now,
+  };
 }
 
 export function parseTags(input) {

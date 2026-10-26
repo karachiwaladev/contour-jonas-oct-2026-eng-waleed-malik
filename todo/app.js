@@ -1,5 +1,7 @@
+// App state and event wiring. Rendering lives in render.js, rules in tasks.js/recurrence.js.
 import { getTasks, addTask, updateTask, deleteTask } from "./db.js";
-import { STATUSES, normalize, parseTags, isOverdue, sortTasks, filterTasks, allTags } from "./tasks.js";
+import { STATUSES, normalize, parseTags, todayISO, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence } from "./tasks.js";
+import { el, repeatPicker, renderTask, renderEditor } from "./render.js";
 
 const form = document.getElementById("new-task");
 const titleInput = document.getElementById("title");
@@ -10,6 +12,9 @@ const tagFilter = document.getElementById("tag-filter");
 const list = document.getElementById("tasks");
 const count = document.getElementById("count");
 
+const newRepeat = repeatPicker(null, "new");
+document.getElementById("repeat-slot").replaceWith(newRepeat.node);
+
 // Storage can throw in private windows; the filter just falls back to "all".
 const STATUS_KEY = "todo.status";
 const loadStatus = () => {
@@ -19,10 +24,24 @@ const saveStatus = (s) => { try { localStorage.setItem(STATUS_KEY, s); } catch {
 
 const state = { status: loadStatus(), tag: null, editingId: null };
 
-const el = (tag, props = {}, ...children) => {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
+const handlers = {
+  async onToggle(task, done) {
+    await updateTask({ ...task, done });
+    // Only the not-done -> done transition spawns the next copy; un-ticking leaves it alone.
+    const next = done && !task.done ? nextOccurrence(task, todayISO()) : null;
+    if (next) await addTask(next);
+    render();
+  },
+  onEdit(task) { state.editingId = task.id; render(); },
+  async onDelete(task) { await deleteTask(task.id); render(); },
+  async onSave(task, { dueDate, tags, repeat }) {
+    // A new due date re-anchors monthly repeats to its day; otherwise keep the original anchor.
+    const r = dueDate === task.dueDate ? repeat : { ...repeat, anchorDay: undefined };
+    await updateTask({ ...task, ...applyRepeat({ dueDate, repeat: r }, todayISO()), tags: parseTags(tags) });
+    state.editingId = null;
+    render();
+  },
+  onCancel() { state.editingId = null; render(); },
 };
 
 async function render() {
@@ -41,57 +60,10 @@ async function render() {
   }));
 
   const shown = sortTasks(filterTasks(tasks, state));
-  list.replaceChildren(...shown.map((t) => (t.id === state.editingId ? renderEditor(t) : renderTask(t))));
+  list.replaceChildren(...shown.map((t) => (t.id === state.editingId ? renderEditor(t, handlers) : renderTask(t, handlers))));
   if (!tasks.length) count.textContent = "No tasks yet";
   else if (!shown.length) count.textContent = "No tasks match these filters";
   else count.textContent = `${shown.length} of ${tasks.length} shown · ${tasks.filter((t) => !t.done).length} left`;
-}
-
-function renderTask(task) {
-  const li = el("li", { className: [task.done && "done", isOverdue(task) && "overdue"].filter(Boolean).join(" ") });
-
-  const box = el("input", { type: "checkbox", checked: task.done });
-  box.setAttribute("aria-label", `Mark "${task.title}" done`);
-  box.addEventListener("change", async () => { await updateTask({ ...task, done: box.checked }); render(); });
-
-  const meta = el("div", { className: "meta" });
-  if (task.dueDate) {
-    meta.append(el("span", { className: "due", textContent: `${isOverdue(task) ? "Overdue · " : "Due "}${task.dueDate}` }));
-  }
-  for (const tag of task.tags) meta.append(el("span", { className: "chip small", textContent: `#${tag}` }));
-
-  const body = el("div", { className: "body" }, el("span", { className: "title", textContent: task.title }), meta);
-
-  const edit = el("button", { type: "button", className: "secondary", textContent: "Edit" });
-  edit.setAttribute("aria-label", `Edit "${task.title}"`);
-  edit.addEventListener("click", () => { state.editingId = task.id; render(); });
-
-  const del = el("button", { type: "button", className: "danger", textContent: "Delete" });
-  del.setAttribute("aria-label", `Delete "${task.title}"`);
-  del.addEventListener("click", async () => { await deleteTask(task.id); render(); });
-
-  li.append(box, body, edit, del);
-  return li;
-}
-
-function renderEditor(task) {
-  const due = el("input", { type: "date", value: task.dueDate || "" });
-  due.setAttribute("aria-label", "Edit due date");
-  const tags = el("input", { type: "text", value: task.tags.join(", "), placeholder: "Tags, comma-separated" });
-  tags.setAttribute("aria-label", "Edit tags");
-
-  const save = el("button", { type: "submit", textContent: "Save" });
-  const cancel = el("button", { type: "button", className: "secondary", textContent: "Cancel" });
-  cancel.addEventListener("click", () => { state.editingId = null; render(); });
-
-  const editor = el("form", { className: "editor" }, el("span", { className: "title", textContent: task.title }), due, tags, save, cancel);
-  editor.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await updateTask({ ...task, dueDate: due.value || null, tags: parseTags(tags.value) });
-    state.editingId = null;
-    render();
-  });
-  return el("li", { className: "editing" }, editor);
 }
 
 statusFilter.addEventListener("click", (e) => {
@@ -106,8 +78,10 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
-  await addTask(title, dueInput.value || null, parseTags(tagsInput.value));
+  const { dueDate, repeat } = applyRepeat({ dueDate: dueInput.value || null, repeat: newRepeat.read() }, todayISO());
+  await addTask({ title, dueDate, tags: parseTags(tagsInput.value), repeat });
   form.reset();
+  newRepeat.reset();
   render();
 });
 
