@@ -42,6 +42,9 @@ Each project lives in its own top-level folder. Add a row here whenever one is c
 |---|---|---|
 | factory-loop | `.claude/skills/factory-loop/SKILL.md` | Picking up, doing, commenting on and closing tickets |
 
+**Stop hook** (`.claude/hooks/auto-commit.js`): after every reply, appends new prompts to
+`.claude/logs/prompts.jsonl`, then commits and pushes any changes (skips if a secret is detected).
+
 ## Rules
 
 - **Keep this file under 100 lines at all times.** If an edit would push it over, move detail

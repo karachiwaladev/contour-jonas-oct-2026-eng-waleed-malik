@@ -38,16 +38,33 @@ Running this skill is the user's approval for the GitHub writes below **on this 
      the ticket silently (don't re-ask, don't report it as news). If someone replied, use the reply and continue.
    - Every comment comes from the same GitHub account, so the hidden `<!-- factory-loop:... -->` markers
      are the only way to tell the loop's own comments from the author's replies - always include them.
-4. **Do the work**:
-   - Question -> answer it accurately and concisely, with the source/figure where useful.
-   - Code/file change -> make it in this repo, then commit with subject `Ticket #N: <what changed>`
-     (no Co-Authored-By trailer) and `git push origin main`.
+4. **Do the work - act, don't just reply.** A ticket is done when the thing it asks for exists in the
+   repo, not when it has been described. Read every ticket for the deliverable:
+   - Pure question -> answer it accurately and concisely, with the source/figure where useful.
+   - Asks for something to exist (a file, doc, config, script, project, app, test...) -> build it in this
+     repo. A new project gets its own top-level folder (the name the ticket gives) with a `README.md`, and a
+     row in the `CLAUDE.md` index. Verify it works (run it, open it in the browser, run its tests) before
+     reporting done.
+   - Both (e.g. "answer X and save it to a file") -> do both.
+   - Commit with subject `Ticket #N: <what changed> (#<issue>)` (no Co-Authored-By trailer) and
+     `git push origin main`. The Stop hook also auto-commits as a safety net, but a per-ticket commit keeps
+     the history readable for reviewers.
 5. **Post the result** as a comment: the answer, or a short summary of what changed plus the commit SHA.
    Lead with the answer in bold and end with `<!-- factory-loop:result -->`. Example:
    `**Karachi** — largest city in Pakistan by population (~20.4M, 2023 census). <!-- factory-loop:result -->`
 6. **Close**: `gh issue close N --repo <repo> --reason completed`.
 7. Report to the user in one line per ticket: number, title, answer/change (or "asked on issue"),
    link to the comment. If nothing changed this run, say so in one line.
+
+## Non-destructive only
+
+The loop runs unattended, so anything it does must be safe to leave and easy to undo with a new commit.
+- Allowed: create files/folders, edit files the ticket is about, add commits, push to `main`, comment on
+  and close the ticket being worked.
+- Never: delete or overwrite files the ticket doesn't own, `rm -rf`, `git push --force`, `git reset --hard`,
+  rewrite history, delete branches, delete/edit/transfer issues, change repo settings, touch other repos,
+  or add real secrets/keys.
+- If a ticket genuinely needs one of those, don't do it - ask on the issue (step 3a) and say what you'd run.
 
 ## Notes
 
