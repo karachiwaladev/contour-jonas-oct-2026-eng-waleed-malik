@@ -24,7 +24,7 @@ async function run(mode, fn) {
 }
 
 export const getTasks = () => run("readonly", (s) => s.getAll());
-export const addTask = (title, dueDate = null, tags = []) =>
-  run("readwrite", (s) => s.add({ title, done: false, dueDate, tags, createdAt: Date.now() }));
+export const addTask = (fields) =>
+  run("readwrite", (s) => s.add({ done: false, dueDate: null, tags: [], repeat: null, createdAt: Date.now(), ...fields }));
 export const updateTask = (task) => run("readwrite", (s) => s.put(task));
 export const deleteTask = (id) => run("readwrite", (s) => s.delete(id));

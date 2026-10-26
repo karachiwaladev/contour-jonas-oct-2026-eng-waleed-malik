@@ -1,13 +1,39 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalize, parseTags, todayISO, isOverdue, sortTasks, filterTasks, allTags } from "./tasks.js";
+import { normalize, parseTags, todayISO, isOverdue, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence } from "./tasks.js";
 
 const t = (id, extra = {}) => normalize({ id, title: `t${id}`, done: false, createdAt: id, ...extra });
 
-test("normalize gives old tasks empty due date and tags", () => {
+test("normalize gives old tasks empty due date, tags and no repeat", () => {
   assert.deepEqual(normalize({ id: 1, title: "old", done: false }), {
-    id: 1, title: "old", done: false, dueDate: null, tags: [],
+    id: 1, title: "old", done: false, dueDate: null, tags: [], repeat: null,
   });
+});
+
+test("applyRepeat: recurring task with no date gets today; monthly remembers its day", () => {
+  assert.deepEqual(applyRepeat({ dueDate: null, repeat: { freq: "daily" } }, "2026-10-26"),
+    { dueDate: "2026-10-26", repeat: { freq: "daily" } });
+  assert.deepEqual(applyRepeat({ dueDate: "2027-01-31", repeat: { freq: "monthly" } }, "2026-10-26"),
+    { dueDate: "2027-01-31", repeat: { freq: "monthly", anchorDay: 31 } });
+  assert.deepEqual(applyRepeat({ dueDate: null, repeat: { freq: "none" } }, "2026-10-26"),
+    { dueDate: null, repeat: null });
+});
+
+test("nextOccurrence copies title, tags and repeat; new date; not done; no id", () => {
+  const done = normalize({ id: 7, title: "Gym", done: true, dueDate: "2026-10-26", tags: ["health"],
+    repeat: { freq: "everyN", n: 2 }, createdAt: 1 });
+  const next = nextOccurrence(done, "2026-10-26", 999);
+  assert.deepEqual(next, { title: "Gym", done: false, dueDate: "2026-10-28", tags: ["health"],
+    repeat: { freq: "everyN", n: 2 }, createdAt: 999 });
+});
+
+test("nextOccurrence is null once this task already created its next copy (re-tick after un-tick)", () => {
+  const t1 = normalize({ id: 3, title: "Gym", done: true, dueDate: "2026-10-26", repeat: { freq: "daily" }, spawnedNext: true });
+  assert.equal(nextOccurrence(t1, "2026-10-26"), null);
+});
+
+test("nextOccurrence is null for non-recurring tasks", () => {
+  assert.equal(nextOccurrence(normalize({ id: 1, title: "x", done: true, dueDate: "2026-10-26" }), "2026-10-26"), null);
 });
 
 test("parseTags trims, lower-cases, drops blanks and duplicates", () => {
