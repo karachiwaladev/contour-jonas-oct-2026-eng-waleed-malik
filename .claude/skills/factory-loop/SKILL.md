@@ -34,7 +34,7 @@ Running this skill is the user's approval for the GitHub writes below **on this 
    terminal, and the question/answer trail on GitHub is part of the scored record.
    - Post one comment with the specific question and the options you see, ending in
      `<!-- factory-loop:question -->`. Then move on to the next ticket - don't block the loop.
-   - On later runs: if the latest `factory-loop:question` comment has **no comment after it**, skip
+   - On later runs: if the newest comment is the loop's own `factory-loop:question` or `factory-loop:plan`, skip
      the ticket silently (don't re-ask, don't report it as news). If someone replied, use the reply and continue.
    - Every comment comes from the same GitHub account, so the hidden `<!-- factory-loop:... -->` markers
      are the only way to tell the loop's own comments from the author's replies - always include them.
@@ -46,6 +46,9 @@ Running this skill is the user's approval for the GitHub writes below **on this 
      row in the `CLAUDE.md` index. Verify it works (run it, open it in the browser, run its tests) before
      reporting done.
    - Both (e.g. "answer X and save it to a file") -> do both.
+   - **Builds a project or a feature in one** -> follow `references/build-flow.md`: clarifying questions
+     on the issue, then a plan the author approves, then build, then verify in Chrome and attach
+     screenshots to the ticket. Read that file before starting such a ticket.
    - Commit with subject `Ticket #N: <what changed> (#<issue>)` (no Co-Authored-By trailer) and
      `git push origin main`. The Stop hook also auto-commits as a safety net, but a per-ticket commit keeps
      the history readable for reviewers.
