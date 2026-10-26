@@ -24,6 +24,7 @@ Don't copy project detail up into this file - link to it from the index instead.
 CLAUDE.md                     # this index (keep under 100 lines)
 .claude/skills/factory-loop/  # the ticket loop
 <project-slug>/               # one top-level folder per project, each with its own README.md
+answers/                      # answers to question tickets, one file per ticket
 ```
 
 ## Index
@@ -52,7 +53,7 @@ Each project lives in its own top-level folder. Add a row here whenever one is c
 - **New project = new top-level folder** `<project-slug>/` (use the name the ticket gives) with a
   `README.md`, plus a row in the index.
   Never mix two projects in one folder.
-- **Commits**: subject starts with the ticket, e.g. `Ticket #2: Add factory CLAUDE.md`. Builds go on a
-  `ticket-<N>-*` branch + PR that the author approves before merge; everything else pushes to `main`.
+- **Every ticket goes through a PR**: work on a `ticket-<N>-*` branch, commit as `Ticket #N: ...`, open
+  a PR, and merge + close only after the author approves. Answers to question tickets live in `answers/`.
 - **Unclear ticket**: ask on the GitHub issue, not in chat, then move on to the next ticket.
 - Training repo only: no Jonas or Contour code, no real keys or secrets.
