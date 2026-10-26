@@ -1,0 +1,53 @@
+# Software Factory
+
+This repo is a **software factory**: work arrives as GitHub Issues (`Ticket #N: ...`), an agent loop
+picks each one up, does the work, pushes to `main`, comments the result and closes the issue.
+We build and improve the loop, not individual features by hand.
+
+Only what is on GitHub counts: files, commits, issue comments, closed issues.
+
+## Progressive disclosure
+
+This file is the **index**, not the manual. It stays short and tells the agent where to look;
+the detail lives next to the work and is loaded only when a ticket needs it.
+
+1. **Level 1 - this file**: what the factory is, the rules, and the index below. Always loaded.
+2. **Level 2 - a project's own `README.md` / `CLAUDE.md`**: read only when a ticket touches that project.
+3. **Level 3 - skills and reference files** (`.claude/skills/*/SKILL.md`, a project's `docs/`):
+   read only when that specific step is being done.
+
+Don't copy project detail up into this file - link to it from the index instead.
+
+## Layout
+
+```
+CLAUDE.md                     # this index (keep under 100 lines)
+.claude/skills/factory-loop/  # the ticket loop
+projects/<project-slug>/      # one folder per project, each with its own README.md
+```
+
+## Index
+
+### Projects
+
+Each project lives in its own folder under `projects/`. Add a row here whenever one is created.
+
+| Project | Folder | What it is | Ticket |
+|---|---|---|---|
+| _(none yet)_ | | | |
+
+### Skills
+
+| Skill | Path | Use it for |
+|---|---|---|
+| factory-loop | `.claude/skills/factory-loop/SKILL.md` | Picking up, doing, commenting on and closing tickets |
+
+## Rules
+
+- **Keep this file under 100 lines at all times.** If an edit would push it over, move detail
+  down into the project's folder and leave a one-line pointer here.
+- **New project = new folder** `projects/<project-slug>/` with a `README.md`, plus a row in the index.
+  Never mix two projects in one folder.
+- **Commits**: subject starts with the ticket, e.g. `Ticket #2: Add factory CLAUDE.md`; push to `main`.
+- **Unclear ticket**: ask on the GitHub issue, not in chat, then move on to the next ticket.
+- Training repo only: no Jonas or Contour code, no real keys or secrets.
