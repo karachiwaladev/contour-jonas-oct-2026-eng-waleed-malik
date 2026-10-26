@@ -1,0 +1,12 @@
+{
+  "repo": "karachiwaladev/contour-jonas-oct-2026-eng-waleed-malik",
+  "rulesFromIssue": {
+    "markers": 3,
+    "pullRequest": 6
+  },
+  "why": {
+    "markers": "Hidden factory-loop:* markers were added to the loop while issue #2 was open; issues #1-#2 predate them.",
+    "pullRequest": "The 'every ticket goes through a PR, clarify + plan first' rule was added before issue #6 (Ticket #5). Issues #1-#5 were done directly on main, as the loop said at the time."
+  },
+  "claudeMdMaxLines": 100
+}

@@ -32,7 +32,7 @@ these PRs; a comment is the normal way to approve. Read only comments newer than
 | What you see | Do |
 |---|---|
 | Newest comment is the loop's own `factory-loop:pr` marker | Waiting - skip silently |
-| Comment "merge", "approved", "lgtm", "ship it", 👍, or a review with state `APPROVED` | `gh pr merge <pr> --squash` (keep the branch - screenshot links point at it), `git checkout main && git pull --ff-only`, then **Finish** |
+| Comment "merge", "approved", "lgtm", "ship it", 👍, or a review with state `APPROVED` (the whole comment is the approval word; "yes but…" is feedback) | Comment on the PR `Merging on approval. <!-- factory-loop:merged -->` (eval EV05 checks an approval precedes it), then `gh pr merge <pr> --squash` (keep the branch - screenshot links point at it), `git checkout main && git pull --ff-only`, then **Finish** |
 | Any other comment, or a `CHANGES_REQUESTED` review | Check out the branch, make the change, re-run tests/checks, push, post an updated summary on the PR ending in a new `<!-- factory-loop:pr -->`, return to `main` |
 | PR already merged (the author merged it) | Nothing to merge - **Finish** |
 | PR closed without merging | Ask on the issue whether to drop or redo the ticket (`factory-loop:question`); don't reopen |

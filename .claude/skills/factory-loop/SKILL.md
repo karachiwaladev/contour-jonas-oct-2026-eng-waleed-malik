@@ -63,6 +63,9 @@ it**, and closing the merged ticket. It does not extend to any other repo or sys
    reading the author's reply each run, making requested changes, squash-merging once approved, posting
    the result on the issue (ending `<!-- factory-loop:result -->`) and closing it. Never close a ticket
    whose PR hasn't been approved and merged.
+   After anything was merged or closed this run, run `node evals/run.mjs` (deterministic process
+   checks, see `evals/README.md`). A ❌ means the loop broke one of its own rules: report it and fix
+   the cause in the skill; never edit the evals to make a failure pass.
 7. **Report** to the user in one line per ticket: number, title, what happened this run ("asked on
    issue", "plan posted", "PR opened <link>", "changes pushed", "merged + closed"), link. If nothing
    changed this run, say so in one line.

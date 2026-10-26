@@ -25,6 +25,7 @@ CLAUDE.md                     # this index (keep under 100 lines)
 .claude/skills/factory-loop/  # the ticket loop
 <project-slug>/               # one top-level folder per project, each with its own README.md
 answers/                      # answers to question tickets, one file per ticket
+evals/                        # deterministic process evals: did the loop follow its rules?
 ```
 
 ## Index
@@ -43,6 +44,7 @@ Each project lives in its own top-level folder. Add a row here whenever one is c
 |---|---|---|
 | factory-loop | `.claude/skills/factory-loop/SKILL.md` | Picking up, doing, commenting on and closing tickets |
 | quality-gate | `.claude/skills/quality-gate/SKILL.md` | Tests first, architecture, security and review before any PR |
+| (evals) | [`evals/README.md`](evals/README.md) | `node evals/run.mjs`: 12 deterministic checks on the GitHub/git record (no AI judging) |
 
 Plugins the loop relies on (declared in `.claude/settings.json`): `superpowers` (TDD, plans,
 verification), `code-review`, `skill-creator`; plus built-in `security-review` and `simplify`.

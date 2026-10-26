@@ -1,0 +1,9 @@
+{
+  "mutate": ["checks.mjs", "lib.mjs"],
+  "testRunner": "command",
+  "commandRunner": { "command": "node --test checks.test.mjs" },
+  "coverageAnalysis": "off",
+  "reporters": ["clear-text", "progress"],
+  "concurrency": 4,
+  "timeoutMS": 10000
+}
