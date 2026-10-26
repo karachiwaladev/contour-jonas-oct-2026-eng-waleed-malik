@@ -59,6 +59,27 @@ test("sortTasks: soonest due first, undated last, ties by creation", () => {
   assert.deepEqual(sortTasks(tasks).map((x) => x.id), [3, 5, 2, 1, 4]);
 });
 
+test("sortTasks: dated before undated regardless of input order", () => {
+  const tasks = [t(1, { dueDate: "2026-11-01" }), t(2)];
+  assert.deepEqual(sortTasks(tasks).map((x) => x.id), [1, 2]);
+  assert.deepEqual(sortTasks([...tasks].reverse()).map((x) => x.id), [1, 2]);
+  // Mixed order so the comparator sees (dated, undated) as well as (undated, dated).
+  const mixed = [t(3), t(4, { dueDate: "2026-10-01" }), t(5), t(6, { dueDate: "2026-09-01" })];
+  assert.deepEqual(sortTasks(mixed).map((x) => x.id), [6, 4, 3, 5]);
+});
+
+test("sortTasks: two dated tasks sort by date in either input order", () => {
+  const early = t(1, { dueDate: "2026-09-01" }), late = t(2, { dueDate: "2026-10-01" });
+  assert.deepEqual(sortTasks([early, late]).map((x) => x.id), [1, 2]);
+  assert.deepEqual(sortTasks([late, early]).map((x) => x.id), [1, 2]);
+});
+
+test("sortTasks: tasks with no createdAt sort before ones that have it on a tie", () => {
+  const noTime = normalize({ id: 9, title: "old", done: false });
+  assert.deepEqual(sortTasks([t(5), noTime]).map((x) => x.id), [9, 5]);
+  assert.deepEqual(sortTasks([noTime, t(5)]).map((x) => x.id), [9, 5]);
+});
+
 test("filterTasks combines status and tag", () => {
   const tasks = [t(1, { tags: ["work"] }), t(2, { tags: ["work"], done: true }), t(3, { tags: ["home"] })];
   const ids = (f) => filterTasks(tasks, f).map((x) => x.id);

@@ -15,6 +15,20 @@ test("normalizeRepeat: every-N needs a whole number >= 1", () => {
   assert.deepEqual(normalizeRepeat({ freq: "everyN", n: "abc" }), { freq: "everyN", n: 1 });
 });
 
+test("normalizeRepeat: monthly without a day keeps no anchor; daily/weekly drop stray fields", () => {
+  assert.deepEqual(normalizeRepeat({ freq: "monthly" }), { freq: "monthly" });
+  assert.deepEqual(normalizeRepeat({ freq: "monthly", anchorDay: 15 }), { freq: "monthly", anchorDay: 15 });
+  assert.deepEqual(normalizeRepeat({ freq: "weekly", n: 9, anchorDay: 3 }), { freq: "weekly" });
+});
+
+test("stepDate: unknown frequency throws instead of guessing", () => {
+  assert.throws(() => stepDate("2026-10-26", { freq: "yearly" }), /Unknown repeat: yearly/);
+});
+
+test("stepDate: monthly with no anchor uses the date's own day", () => {
+  assert.equal(stepDate("2026-10-15", { freq: "monthly" }), "2026-11-15");
+});
+
 test("stepDate: daily, weekly, every N days", () => {
   assert.equal(stepDate("2026-10-26", { freq: "daily" }), "2026-10-27");
   assert.equal(stepDate("2026-10-26", { freq: "weekly" }), "2026-11-02");

@@ -39,5 +39,5 @@ node --test todo/tasks.test.mjs todo/recurrence.test.mjs
 - `tasks.test.mjs`, `recurrence.test.mjs`: unit tests
 - `db.js`: IndexedDB wrapper (`getTasks`, `addTask`, `updateTask`, `deleteTask`)
 - `styles.css`: styling
-- `package.json`: marks the folder as ES modules so Node can run the tests
+- `package.json`: ES modules, test scripts, test-only dependencies
 - `screenshots/`: browser verification screenshots attached to tickets
