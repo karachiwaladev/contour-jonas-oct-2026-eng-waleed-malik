@@ -26,7 +26,11 @@ Then open the printed URL (for example http://localhost:3000).
 ## Test
 
 ```
-node --test todo/tasks.test.mjs todo/recurrence.test.mjs
+cd todo
+npm install        # test-only: jsdom (fake page), fake-indexeddb (fake browser database), Stryker
+npm test
+npm run coverage
+npm run mutation   # Stryker: mutates the code, checks the tests catch it (~13 min); report in reports/mutation/
 ```
 
 ## Files
@@ -36,7 +40,10 @@ node --test todo/tasks.test.mjs todo/recurrence.test.mjs
 - `render.js`: builds the task rows, inline editor and repeat picker (DOM only)
 - `tasks.js`: pure task logic (normalize, tags, overdue, sort, filter, next occurrence), unit-tested
 - `recurrence.js`: pure date maths for repeats (next date, skip-ahead, month ends), unit-tested
-- `tasks.test.mjs`, `recurrence.test.mjs`: unit tests
+- `tasks.test.mjs`, `recurrence.test.mjs`: unit tests for the pure logic
+- `db.test.mjs`, `render.test.mjs`, `app.test.mjs`: storage, DOM building and whole-page tests (jsdom + fake-indexeddb)
+- `test-dom.mjs`: test helper that sets up the fake page
+- `stryker.config.json`: mutation-testing config
 - `db.js`: IndexedDB wrapper (`getTasks`, `addTask`, `updateTask`, `deleteTask`)
 - `styles.css`: styling
 - `package.json`: ES modules, test scripts, test-only dependencies
