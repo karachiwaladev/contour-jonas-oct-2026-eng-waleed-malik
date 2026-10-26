@@ -31,6 +31,7 @@ Needs Node 22 and `gh` logged in (read-only calls only).
 | EV10 | No `Co-Authored-By` trailers | all commit messages |
 | EV11 | `CLAUDE.md` under 100 lines; every project folder has a README | working tree |
 | EV12 | No secrets committed | tracked files vs. token/key patterns |
+| EV13 | **Task eval**: the approved plan has an Eval section; `<project>/evals/ticket-<N>.test.mjs` is committed **before** any product code; any later change to it is followed by an author approval on the PR; the PR body shows `### Task eval` all ✅ | plan comment, files per commit + commit times, PR comments, PR body |
 
 **Approval** is a comment that is *only* an approval word (`approved`, `merge`, `lgtm`, `ship it`, `yes`,
 `go ahead`, 👍). "yes but rename it" is feedback, not approval. A comment carrying a loop marker is never
@@ -39,12 +40,19 @@ the author's.
 **Rule eras** (`config.json`): rules apply from the issue where they were introduced; earlier tickets
 show as ➖ skipped with the reason, never as silently passing.
 
+## Two kinds of eval
+
+- **Process evals** (this folder, EV01-EV13): did the loop follow its rules?
+- **Task evals** (`<project>/evals/ticket-<N>.test.mjs`, one per build ticket): does the feature do what
+  the approved plan's Eval list says? Written from that list, run red before any code, green at the end.
+  EV13 proves the order from git, so "done" can't be redefined after the fact.
+
 ## Trusting the evals
 
 - `checks.test.mjs` feeds every check a known-good history (must pass) and each rule broken on purpose
   (that check must fail), including boundaries, out-of-order comments and near-miss approval words.
 - The checks are mutation-tested (`stryker.config.json`, run with the `todo/` Stryker install:
-  `cd evals && node ../todo/node_modules/@stryker-mutator/core/bin/stryker.js run`): **91%** of
+  `cd evals && node ../todo/node_modules/@stryker-mutator/core/bin/stryker.js run`): about **90%** of
   injected bugs are caught; the survivors only change message text or are equivalent.
 
 ## Limits (what it can't see)

@@ -18,6 +18,10 @@ export const imageLinks = (body = "") => [...body.matchAll(/!\[[^\]]*\]\((https:
 const CODE = /\.(m?js|ts|html|css)$/;
 const NOT_PRODUCT = /^(answers|evals|\.claude|\.github)\//;
 export const isBuildPr = (pr) => pr.files.some((f) => CODE.test(f.path) && !NOT_PRODUCT.test(f.path));
+// Shipped code: not tests, not evals. The task eval must be committed before any of this.
+export const isProductFile = (path) =>
+  CODE.test(path) && !NOT_PRODUCT.test(path) && !/\.test\.m?js$/.test(path) && !/(^|\/)evals\//.test(path);
+export const taskEvalPath = (ticket) => new RegExp(`^[^/]+/evals/ticket-${ticket}\\.test\\.mjs$`);
 
 export const sortByTime = (comments) => [...comments].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 export const lastIndex = (arr, pred) => { for (let i = arr.length - 1; i >= 0; i--) if (pred(arr[i])) return i; return -1; };

@@ -34,18 +34,31 @@ anything the ticket leaves open. Keep it to what matters; 3-7 questions.
 ## 2. Plan
 
 Once the questions are answered, post a plan on the issue: what will be built, files/folders touched,
-the approach, and how it will be verified (the exact checks you'll run in the browser). End with:
+the approach, how it will be verified (the exact checks you'll run in the browser), and an **Eval**
+section: a numbered list of plain-language pass/fail checks that define "done" (one behaviour each,
+including old data and edge cases). Approving the plan approves that eval; it is the contract. End with:
 "Reply **approved** to build, or comment with changes."
 - Clear approval ("approved", "yes", "go ahead", "lgtm", 👍) -> phase 3.
 - Anything else is feedback: revise and post an updated plan (new `factory-loop:plan` marker).
 
 ## 3. Build (on a branch)
 
-`git checkout -b ticket-<N>-<short-slug>` from current `main`. Build exactly the approved plan,
+`git checkout -b ticket-<N>-<short-slug>` from current `main`.
+
+**Task eval first.** Turn the approved Eval list into `<project>/evals/ticket-<N>.test.mjs`, one test
+per numbered check, named after it ("E1: ..."), driving the real app the way the project's tests do.
+Run it before any feature code exists: every check must **fail** (a check that passes now tests
+nothing - fix it). Commit it alone as `Ticket #N: task eval (red, 0/<n>) (#<issue>)` and keep the
+failing output for the PR. Process eval EV13 verifies from git that this commit comes before any
+product code, and that later edits to the eval were approved on the PR.
+
+Then build exactly the approved plan,
 **test-first**: follow the `quality-gate` skill - turn the plan's checks into failing tests, then write
 the code until they pass, keeping to its architecture rules. If the plan turns out not to work as
 written, stop and post a revised plan on the issue rather than quietly building something different.
 Commit as `Ticket #N: ... (#<issue>)`, only when the tests pass (exit code, not printed output).
+Done means the task eval is fully green. Never weaken an eval check to make it pass: if a check is
+wrong, say so on the PR and change it only after the author approves.
 
 Before the browser step, finish the rest of the `quality-gate` (architecture, security, review) and
 keep its ✅ list for the PR body.

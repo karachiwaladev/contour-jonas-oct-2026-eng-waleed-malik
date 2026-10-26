@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { runChecks } from "./checks.mjs";
+import { CHECKS, runChecks } from "./checks.mjs";
 import { fetchSnapshot } from "./fetch.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -25,10 +25,11 @@ const count = (s) => rows.filter((r) => r.status === s).length;
 if (args.includes("--json")) console.log(JSON.stringify(rows, null, 2));
 else {
   const ICON = { pass: "✅", fail: "❌", skip: "➖" };
-  let last = "";
-  for (const r of rows) {
-    if (r.id !== last) { console.log(`\n${r.id}  ${r.title}`); last = r.id; }
-    console.log(`  ${ICON[r.status]} ${r.subject}${r.detail ? ` - ${r.detail}` : ""}`);
+  for (const check of CHECKS) {
+    console.log(`\n${check.id}  ${check.title}`);
+    const mine = rows.filter((r) => r.id === check.id);
+    if (!mine.length) console.log("  ➖ nothing in scope yet");
+    for (const r of mine) console.log(`  ${ICON[r.status]} ${r.subject}${r.detail ? ` - ${r.detail}` : ""}`);
   }
   console.log(`\n${count("pass")} passed, ${count("fail")} failed, ${count("skip")} skipped (snapshot ${snap.fetchedAt})`);
 }

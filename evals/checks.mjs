@@ -1,7 +1,7 @@
 // Process evals: each check is a pure function of a snapshot (GitHub + git data) -> pass/fail/skip rows.
 // Same snapshot in, same verdict out. See README.md for what each rule enforces and why.
 import {
-  hasMarker, isAuthor, isApproval, ticketNo, imageLinks, isBuildPr,
+  hasMarker, isAuthor, isApproval, ticketNo, imageLinks, isBuildPr, isProductFile, taskEvalPath,
   sortByTime, lastIndex, prFor,
 } from "./lib.mjs";
 
@@ -166,7 +166,39 @@ export const CHECKS = [
       ? fail("repo", snap.local.secretHits.map((h) => `${h.file}:${h.line} (${h.kind})`).join("; "))
       : pass("repo", `${snap.local.filesScanned} tracked files scanned`)],
   },
+  {
+    id: "EV13", title: "Task eval: in the approved plan, committed red before any product code, never changed unapproved",
+    run: (snap, cfg) => prEra(snap, cfg)
+      .filter(({ issue, pr }) => pr && isBuildPr(pr) && inEra(issue, cfg.rulesFromIssue.taskEval))
+      .map(({ issue, comments, pr }) => taskEvalVerdict(issue, comments, pr)),
+  },
 ];
+
+function taskEvalVerdict(issue, comments, pr) {
+  const t = ticketNo(issue.title);
+  const plan = comments[lastIndex(comments, (c) => hasMarker(c, "plan"))];
+  if (!plan || !/^#{0,4}\s*\**Eval\b/im.test(plan.body)) return fail(label(issue), "approved plan has no Eval section");
+  const evalRe = taskEvalPath(t);
+  const commits = [...pr.commits].sort((a, b) => a.committedDate.localeCompare(b.committedDate));
+  const touchesEval = (c) => (c.files || []).some((f) => evalRe.test(f));
+  const touchesProduct = (c) => (c.files || []).some(isProductFile);
+  const firstEval = commits.findIndex(touchesEval);
+  if (firstEval < 0) return fail(label(issue), `no task eval file <project>/evals/ticket-${t}.test.mjs in the PR`);
+  const firstProduct = commits.findIndex(touchesProduct);
+  if (firstProduct >= 0 && firstProduct <= firstEval) {
+    return fail(label(issue), `product code (${commits[firstProduct].oid.slice(0, 7)}) committed before or with the task eval`);
+  }
+  // After code exists, any change to the eval needs an author approval on the PR after that commit.
+  const prComments = sortByTime(pr.comments);
+  const unapproved = commits.slice(firstProduct < 0 ? commits.length : firstProduct)
+    .filter(touchesEval)
+    .filter((c) => !prComments.some((pc) => pc.createdAt > c.committedDate && isApproval(pc)));
+  if (unapproved.length) return fail(label(issue), `eval changed after code without approval: ${unapproved.map((c) => c.oid.slice(0, 7)).join(", ")}`);
+  const section = /### Task eval([\s\S]*?)(\n#{1,3} |$)/.exec(pr.body || "");
+  if (!section) return fail(label(issue), "PR body has no '### Task eval' section");
+  if (/❌/.test(section[1]) || !/✅/.test(section[1])) return fail(label(issue), "task eval section is not all ✅");
+  return pass(label(issue), `eval ${commits[firstEval].oid.slice(0, 7)} before code`);
+}
 
 export function runChecks(snap, cfg) {
   return CHECKS.flatMap((c) => c.run(snap, cfg).map((r) => ({ id: c.id, title: c.title, ...r })));

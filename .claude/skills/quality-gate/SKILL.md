@@ -63,6 +63,10 @@ note anything you choose not to change and why.
 ## Output for the PR body
 
 ```
+### Task eval
+- ✅ `<project>/evals/ticket-<N>.test.mjs`: 0/<n> before code (red commit <sha>) → <n>/<n> after
+- ✅ Mutation: <score>% of injected bugs in the changed files caught by tests + eval (Stryker)
+
 ### Quality gate
 - ✅ Tests: <n> passing (`<command>`), <n> new, written test-first from plan checks <list>
 - ✅ Architecture: <files + line counts>; <split made / why none needed>

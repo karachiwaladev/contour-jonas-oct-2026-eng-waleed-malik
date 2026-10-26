@@ -3,16 +3,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { CHECKS, runChecks } from "./checks.mjs";
-import { isApproval, markers, closesIssue, ticketNo, isBuildPr } from "./lib.mjs";
+import { isApproval, markers, closesIssue, ticketNo, isBuildPr, isProductFile, taskEvalPath } from "./lib.mjs";
 
-const cfg = { rulesFromIssue: { markers: 3, pullRequest: 6 }, claudeMdMaxLines: 100 };
+const cfg = { rulesFromIssue: { markers: 3, pullRequest: 6, taskEval: 8 }, claudeMdMaxLines: 100 };
 const REPO = "o/r";
 const IMG = `https://github.com/${REPO}/blob/abc/todo/screenshots/t.png?raw=true`;
 const c = (createdAt, body) => ({ createdAt, body });
 const loop = (t, m, text = "x") => c(t, `${text} <!-- factory-loop:${m} -->`);
 
 const GATE = "### Quality gate\n- ✅ Tests: 3\n- ✅ Architecture: ok\n- ✅ Security: clean\n- ✅ Review: none\n";
-const PR_BODY = `Closes #20\n\n![shot](${IMG})\n\n${GATE}\nApprove to merge: comment **merge**.\n\n<!-- factory-loop:pr -->`;
+const EVAL_FILE = "todo/evals/ticket-17.test.mjs";
+const EVAL_SECTION = "### Task eval\n- ✅ todo/evals/ticket-17.test.mjs: 0/3 before code → 3/3 after\n";
+const PR_BODY = `Closes #20\n\n![shot](${IMG})\n\n${EVAL_SECTION}\n${GATE}\nApprove to merge: comment **merge**.\n\n<!-- factory-loop:pr -->`;
 
 // Issue #20 = Ticket #17, built through PR #21 exactly as the loop's rules say. Bystanders: an older
 // ticket from before the PR rule (#5) and a non-ticket issue (#2), which the PR-era rules must ignore.
@@ -22,7 +24,7 @@ function good() {
       number: 20, title: "Ticket #17: Thing", state: "CLOSED", createdAt: "2026-01-01T00:00:00Z", closedAt: "2026-01-01T05:00:00Z",
       comments: [
         loop("2026-01-01T00:01:00Z", "question"), c("2026-01-01T00:02:00Z", "defaults are fine"),
-        loop("2026-01-01T00:03:00Z", "plan"), c("2026-01-01T00:04:00Z", "approved"),
+        loop("2026-01-01T00:03:00Z", "plan", "Plan\n\n**Eval**\n1. High badge shows"), c("2026-01-01T00:04:00Z", "approved"),
         loop("2026-01-01T05:00:01Z", "result"),
       ],
     }, {
@@ -36,7 +38,10 @@ function good() {
       number: 21, headRefName: "ticket-17-thing", state: "MERGED", mergedAt: "2026-01-01T04:59:00Z",
       body: PR_BODY, mergeCommit: { oid: "m1" },
       comments: [c("2026-01-01T04:00:00Z", "merge"), loop("2026-01-01T04:58:00Z", "merged")],
-      commits: [{ oid: "c1", messageHeadline: "Ticket #17: Build it (#10)", messageBody: "", committedDate: "2026-01-01T01:00:00Z" }],
+      commits: [
+        { oid: "e0", messageHeadline: "Ticket #17: task eval (red, 0/3) (#20)", messageBody: "", committedDate: "2026-01-01T00:30:00Z", files: [EVAL_FILE] },
+        { oid: "c1", messageHeadline: "Ticket #17: Build it (#10)", messageBody: "", committedDate: "2026-01-01T01:00:00Z", files: ["todo/app.js", "todo/app.test.mjs"] },
+      ],
       files: [{ path: "todo/app.js" }],
     }],
     branches: ["main", "ticket-17-thing"],
@@ -167,7 +172,7 @@ test("EV09: re-posting a waiting prompt with no reply in between fails", () => {
 
 test("EV10: a Co-Authored-By trailer anywhere fails", () => {
   breaks("EV10", (s) => { s.mainCommits[1].message += "\n\nCo-Authored-By: Bot <b@x>"; }, /x0/);
-  breaks("EV10", (s) => { s.prs[0].commits[0].messageBody = "co-authored-by: bot"; }, /c1/);
+  breaks("EV10", (s) => { s.prs[0].commits[1].messageBody = "co-authored-by: bot"; }, /c1/);
 });
 
 test("EV11: oversized CLAUDE.md or a project folder with no README fails", () => {
@@ -267,4 +272,62 @@ test("lib: near-miss words and paths", () => {
 test("EV07/EV10: failure detail lists short SHAs", () => {
   breaks("EV07", (s) => { s.prs[0].commits[0].oid = "abcdef1234"; s.prs[0].commits[0].messageHeadline = "wip"; }, /^abcdef1 "wip"$/);
   breaks("EV10", (s) => { s.mainCommits[1].oid = "1234567890"; s.mainCommits[1].message += "\nCo-Authored-By: x"; }, /^1234567$/);
+});
+
+test("EV13: every way of cheating on the task eval fails", () => {
+  const plan = (s) => s.issues[0].comments.find((x) => x.body.includes("factory-loop:plan"));
+  breaks("EV13", (s) => { plan(s).body = "Plan, no checks listed <!-- factory-loop:plan -->"; }, /no Eval section/);
+  breaks("EV13", (s) => { s.prs[0].commits.shift(); }, /no task eval file/);
+  breaks("EV13", (s) => { s.prs[0].commits[0].files = ["todo/evals/ticket-18.test.mjs"]; }, /no task eval file/);
+  breaks("EV13", (s) => { s.prs[0].commits[0].files = ["evals/ticket-17.test.mjs"]; }, /no task eval file/);
+  // Eval written after, or in the same commit as, the feature code.
+  breaks("EV13", (s) => { s.prs[0].commits[0].committedDate = "2026-01-01T02:00:00Z"; }, /before or with the task eval/);
+  breaks("EV13", (s) => { s.prs[0].commits[0].files.push("todo/tasks.js"); }, /before or with the task eval/);
+  // Eval weakened after code exists, with no approval afterwards.
+  const weaken = (s) => s.prs[0].commits.push({ oid: "w1", messageHeadline: "Ticket #17: relax eval", messageBody: "", committedDate: "2026-01-01T04:30:00Z", files: [EVAL_FILE] });
+  breaks("EV13", weaken, /without approval: w1/);
+  breaks("EV13", (s) => { s.prs[0].body = s.prs[0].body.replace(EVAL_SECTION, ""); }, /no '### Task eval'/);
+  breaks("EV13", (s) => { s.prs[0].body = s.prs[0].body.replace("- ✅ todo/evals", "- ❌ todo/evals"); }, /not all ✅/);
+});
+
+test("EV13: allowed cases pass", () => {
+  // Eval changed after code, then approved on the PR.
+  const s = good();
+  s.prs[0].commits.push({ oid: "w1", messageHeadline: "Ticket #17: fix eval typo", messageBody: "", committedDate: "2026-01-01T03:00:00Z", files: [EVAL_FILE] });
+  assert.deepEqual(statuses(s, "EV13"), ["pass"]);
+  // Eval refined in several commits before any code, and tests/eval helpers don't count as product code.
+  const s2 = good();
+  s2.prs[0].commits.splice(1, 0, { oid: "e1", messageHeadline: "Ticket #17: eval helper", messageBody: "", committedDate: "2026-01-01T00:40:00Z", files: [EVAL_FILE, "todo/evals/eval-dom.mjs", "todo/app.test.mjs"] });
+  assert.deepEqual(statuses(s2, "EV13"), ["pass"]);
+  // Before the task-eval era, or a doc-only PR: not checked.
+  const s3 = good();
+  s3.issues[0].number = 7;
+  s3.prs[0].body = s3.prs[0].body.replace("Closes #20", "Closes #7");
+  assert.deepEqual(statuses(s3, "EV13"), []);
+  const s4 = good();
+  s4.prs[0].files = [{ path: "answers/ticket-17.md" }];
+  assert.deepEqual(statuses(s4, "EV13"), []);
+});
+
+test("lib: product files vs tests/evals", () => {
+  assert.ok(isProductFile("todo/app.js"));
+  assert.ok(isProductFile("todo/index.html"));
+  for (const p of ["todo/app.test.mjs", "todo/evals/ticket-6.test.mjs", "evals/checks.mjs", "todo/README.md", ".claude/hooks/x.js"]) assert.ok(!isProductFile(p), p);
+  assert.ok(taskEvalPath(6).test("todo/evals/ticket-6.test.mjs"));
+  assert.ok(!taskEvalPath(6).test("todo/evals/ticket-60.test.mjs"));
+  assert.ok(!taskEvalPath(6).test("todo/evals/ticket-6.test.mjs.bak"));
+  assert.ok(!taskEvalPath(6).test("a/todo/evals/ticket-6.test.mjs"));
+});
+
+test("EV13: section and plan parsing edges", () => {
+  breaks("EV13", (s) => { s.prs[0].body = s.prs[0].body.replace("- ✅ todo/evals", "- todo/evals"); }, /not all ✅/);
+  breaks("EV13", (s) => {
+    const p = s.issues[0].comments.find((x) => x.body.includes("factory-loop:plan"));
+    p.body = "Plan: we skip the Eval this time <!-- factory-loop:plan -->";
+  }, /no Eval section/);
+  // A ❌ in the quality gate below is EV06's business, not EV13's.
+  const s = good();
+  s.prs[0].body = s.prs[0].body.replace("✅ Security", "❌ Security");
+  assert.deepEqual(statuses(s, "EV13"), ["pass"]);
+  assert.ok(!isProductFile("todo/app.test.js"));
 });

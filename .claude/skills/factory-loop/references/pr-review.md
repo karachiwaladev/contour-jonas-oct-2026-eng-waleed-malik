@@ -15,7 +15,8 @@ answers and small edits as much as to builds - the author reviews the actual cha
    - `Closes #<issue>`
    - What changed and why (for a question ticket: the answer itself, in bold, with the source)
    - The checks run, as a ✅ list; screenshots embedded if it's a build (see `build-flow.md`)
-   - For any code change, the `### Quality gate` section from the `quality-gate` skill
+   - For any code change, the `### Task eval` (build tickets) and `### Quality gate` sections from the
+     `quality-gate` skill
    - Last line of text: "Approve to merge: comment **merge** (or **approved**), or comment with changes."
    - End with `<!-- factory-loop:pr -->`
 4. On the issue, comment a link to the PR (no waiting marker - the PR is where review happens).

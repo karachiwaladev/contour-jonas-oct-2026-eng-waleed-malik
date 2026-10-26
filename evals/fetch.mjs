@@ -53,6 +53,10 @@ export function fetchSnapshot(repo, root) {
   const prs = gh("pr", "list", "--repo", repo, "--state", "all", "--limit", "500", "--json", "number")
     .map(({ number }) => gh("pr", "view", String(number), "--repo", repo,
       "--json", "number,title,headRefName,state,createdAt,mergedAt,closedAt,body,mergeCommit,comments,commits,files"));
+  // Files per PR commit: EV13 needs to know which commit first touched the eval vs. product code.
+  for (const pr of prs) for (const c of pr.commits) {
+    c.files = gh("api", `repos/${repo}/commits/${c.oid}`, "--jq", "[.files[].filename]");
+  }
   const branches = gh("api", `repos/${repo}/branches?per_page=100`, "--paginate", "--jq", "[.[].name]");
   const mainCommits = gh("api", `repos/${repo}/commits?sha=main&per_page=100`, "--paginate", "--jq", "[.[] | {oid: .sha, message: .commit.message}]");
   const images = {};
