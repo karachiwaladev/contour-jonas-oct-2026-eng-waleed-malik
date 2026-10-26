@@ -23,7 +23,7 @@ Then open the printed URL (for example http://localhost:3000).
 ## Test
 
 ```
-node --test todo/
+node --test todo/tasks.test.mjs
 ```
 
 ## Files
