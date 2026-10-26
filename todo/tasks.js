@@ -2,14 +2,19 @@
 import { normalizeRepeat, nextDueDate } from "./recurrence.js";
 
 export const STATUSES = ["all", "active", "completed"];
+// Highest first; the order doubles as the sort rank. No priority is stored as null.
+export const PRIORITIES = ["high", "medium", "low"];
+export const normalizePriority = (p) => (PRIORITIES.includes(p) ? p : null);
+const rank = (p) => (p ? PRIORITIES.indexOf(p) : PRIORITIES.length);
 
-// Tasks saved before due dates/tags/repeat existed lack those fields; treat them as empty.
+// Tasks saved before due dates/tags/repeat/priority existed lack those fields; treat them as empty.
 export function normalize(task) {
   return {
     ...task,
     dueDate: task.dueDate || null,
     tags: Array.isArray(task.tags) ? task.tags : [],
     repeat: normalizeRepeat(task.repeat),
+    priority: normalizePriority(task.priority),
   };
 }
 
@@ -33,6 +38,7 @@ export function nextOccurrence(task, today, now = Date.now()) {
     dueDate: nextDueDate(task.dueDate, task.repeat, today),
     tags: [...task.tags],
     repeat: { ...task.repeat },
+    priority: task.priority,
     createdAt: now,
   };
 }
@@ -55,7 +61,7 @@ export function isOverdue(task, today = todayISO()) {
   return !task.done && !!task.dueDate && task.dueDate < today;
 }
 
-// Soonest due first; undated tasks last; ties keep creation order.
+// Soonest due first; undated tasks last; same date by priority (High first), then creation order.
 export function sortTasks(tasks) {
   return [...tasks].sort((a, b) => {
     if (a.dueDate !== b.dueDate) {
@@ -63,15 +69,16 @@ export function sortTasks(tasks) {
       if (!b.dueDate) return -1;
       return a.dueDate < b.dueDate ? -1 : 1;
     }
-    return (a.createdAt || 0) - (b.createdAt || 0);
+    return rank(a.priority) - rank(b.priority) || (a.createdAt || 0) - (b.createdAt || 0);
   });
 }
 
-export function filterTasks(tasks, { status = "all", tag = null } = {}) {
+export function filterTasks(tasks, { status = "all", tag = null, priority = "all" } = {}) {
   return tasks.filter((t) => {
     if (status === "active" && t.done) return false;
     if (status === "completed" && !t.done) return false;
     if (tag && !t.tags.includes(tag)) return false;
+    if (priority !== "all" && t.priority !== priority) return false;
     return true;
   });
 }

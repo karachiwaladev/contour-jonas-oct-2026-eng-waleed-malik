@@ -1,19 +1,22 @@
 // App state and event wiring. Rendering lives in render.js, rules in tasks.js/recurrence.js.
 import { getTasks, addTask, updateTask, deleteTask } from "./db.js";
-import { STATUSES, normalize, parseTags, todayISO, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence } from "./tasks.js";
-import { el, repeatPicker, renderTask, renderEditor } from "./render.js";
+import { STATUSES, normalize, normalizePriority, parseTags, todayISO, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence } from "./tasks.js";
+import { el, repeatPicker, priorityPicker, renderTask, renderEditor } from "./render.js";
 
 const form = document.getElementById("new-task");
 const titleInput = document.getElementById("title");
 const dueInput = document.getElementById("due");
 const tagsInput = document.getElementById("tags");
 const statusFilter = document.getElementById("status-filter");
+const priorityFilter = document.getElementById("priority-filter");
 const tagFilter = document.getElementById("tag-filter");
 const list = document.getElementById("tasks");
 const count = document.getElementById("count");
 
 const newRepeat = repeatPicker(null, "new");
 document.getElementById("repeat-slot").replaceWith(newRepeat.node);
+const newPriority = priorityPicker(null);
+document.getElementById("priority-slot").replaceWith(newPriority);
 
 // Storage can throw in private windows; the filter just falls back to "all".
 const STATUS_KEY = "todo.status";
@@ -22,7 +25,7 @@ const loadStatus = () => {
 };
 const saveStatus = (s) => { try { localStorage.setItem(STATUS_KEY, s); } catch {} };
 
-const state = { status: loadStatus(), tag: null, editingId: null };
+const state = { status: loadStatus(), tag: null, priority: "all", editingId: null };
 
 const handlers = {
   async onToggle(task, done) {
@@ -34,10 +37,10 @@ const handlers = {
   },
   onEdit(task) { state.editingId = task.id; render(); },
   async onDelete(task) { await deleteTask(task.id); render(); },
-  async onSave(task, { dueDate, tags, repeat }) {
+  async onSave(task, { dueDate, tags, repeat, priority }) {
     // A new due date re-anchors monthly repeats to its day; otherwise keep the original anchor.
     const r = dueDate === task.dueDate ? repeat : { ...repeat, anchorDay: undefined };
-    await updateTask({ ...task, ...applyRepeat({ dueDate, repeat: r }, todayISO()), tags: parseTags(tags) });
+    await updateTask({ ...task, ...applyRepeat({ dueDate, repeat: r }, todayISO()), tags: parseTags(tags), priority: normalizePriority(priority) });
     state.editingId = null;
     render();
   },
@@ -51,6 +54,9 @@ async function render() {
 
   for (const btn of statusFilter.querySelectorAll("button")) {
     btn.setAttribute("aria-pressed", String(btn.dataset.status === state.status));
+  }
+  for (const btn of priorityFilter.querySelectorAll("button")) {
+    btn.setAttribute("aria-pressed", String(btn.dataset.priority === state.priority));
   }
   tagFilter.replaceChildren(...tags.map((tag) => {
     const chip = el("button", { type: "button", className: "chip", textContent: `#${tag}` });
@@ -74,12 +80,19 @@ statusFilter.addEventListener("click", (e) => {
   render();
 });
 
+priorityFilter.addEventListener("click", (e) => {
+  const priority = e.target.dataset && e.target.dataset.priority;
+  if (!priority) return;
+  state.priority = priority;
+  render();
+});
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
   const { dueDate, repeat } = applyRepeat({ dueDate: dueInput.value || null, repeat: newRepeat.read() }, todayISO());
-  await addTask({ title, dueDate, tags: parseTags(tagsInput.value), repeat });
+  await addTask({ title, dueDate, tags: parseTags(tagsInput.value), repeat, priority: normalizePriority(newPriority.value) });
   form.reset();
   newRepeat.reset();
   render();

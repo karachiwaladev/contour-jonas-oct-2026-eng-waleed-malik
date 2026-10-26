@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalize, parseTags, todayISO, isOverdue, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence } from "./tasks.js";
+import { normalize, parseTags, todayISO, isOverdue, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence, PRIORITIES, normalizePriority } from "./tasks.js";
 
 const t = (id, extra = {}) => normalize({ id, title: `t${id}`, done: false, createdAt: id, ...extra });
 
 test("normalize gives old tasks empty due date, tags and no repeat", () => {
   assert.deepEqual(normalize({ id: 1, title: "old", done: false }), {
-    id: 1, title: "old", done: false, dueDate: null, tags: [], repeat: null,
+    id: 1, title: "old", done: false, dueDate: null, tags: [], repeat: null, priority: null,
   });
 });
 
@@ -24,7 +24,7 @@ test("nextOccurrence copies title, tags and repeat; new date; not done; no id", 
     repeat: { freq: "everyN", n: 2 }, createdAt: 1 });
   const next = nextOccurrence(done, "2026-10-26", 999);
   assert.deepEqual(next, { title: "Gym", done: false, dueDate: "2026-10-28", tags: ["health"],
-    repeat: { freq: "everyN", n: 2 }, createdAt: 999 });
+    repeat: { freq: "everyN", n: 2 }, priority: null, createdAt: 999 });
 });
 
 test("nextOccurrence is null once this task already created its next copy (re-tick after un-tick)", () => {
@@ -92,4 +92,40 @@ test("filterTasks combines status and tag", () => {
 
 test("allTags is sorted and unique", () => {
   assert.deepEqual(allTags([t(1, { tags: ["work", "b"] }), t(2, { tags: ["a", "work"] })]), ["a", "b", "work"]);
+});
+
+test("normalizePriority: only high/medium/low survive; anything else is no priority", () => {
+  assert.deepEqual(PRIORITIES, ["high", "medium", "low"]);
+  for (const p of PRIORITIES) assert.equal(normalizePriority(p), p);
+  for (const p of [undefined, null, "", "urgent", "HIGH", 1]) assert.equal(normalizePriority(p), null);
+  assert.equal(normalize({ id: 1, title: "x", done: false, priority: "urgent" }).priority, null);
+  assert.equal(normalize({ id: 1, title: "x", done: false, priority: "low" }).priority, "low");
+});
+
+test("sortTasks: same date breaks ties High > Medium > Low > none, then creation", () => {
+  const tasks = [
+    t(1, { dueDate: "2026-10-01" }), t(2, { dueDate: "2026-10-01", priority: "low" }),
+    t(3, { dueDate: "2026-10-01", priority: "high" }), t(4, { dueDate: "2026-10-01", priority: "medium" }),
+    t(5, { dueDate: "2026-09-01", priority: "low" }), t(6, { dueDate: "2026-10-01", priority: "high" }),
+    t(7, { priority: "high" }), t(8),
+  ];
+  assert.deepEqual(sortTasks(tasks).map((x) => x.id), [5, 3, 6, 4, 2, 1, 7, 8]);
+});
+
+test("filterTasks: priority filter combines with status and tag", () => {
+  const tasks = [t(1, { priority: "high", tags: ["work"] }), t(2, { priority: "high", done: true, tags: ["work"] }),
+    t(3, { priority: "low", tags: ["work"] }), t(4)];
+  const ids = (f) => filterTasks(tasks, f).map((x) => x.id);
+  assert.deepEqual(ids({ priority: "all" }), [1, 2, 3, 4]);
+  assert.deepEqual(ids({}), [1, 2, 3, 4]);
+  assert.deepEqual(ids({ priority: "high" }), [1, 2]);
+  assert.deepEqual(ids({ priority: "low" }), [3]);
+  assert.deepEqual(ids({ priority: "high", status: "active", tag: "work" }), [1]);
+});
+
+test("nextOccurrence keeps the priority", () => {
+  const done = normalize({ id: 7, title: "Gym", done: true, dueDate: "2026-10-26", repeat: { freq: "daily" }, priority: "high" });
+  assert.equal(nextOccurrence(done, "2026-10-26", 1).priority, "high");
+  const plain = normalize({ id: 8, title: "Walk", done: true, dueDate: "2026-10-26", repeat: { freq: "daily" } });
+  assert.equal(nextOccurrence(plain, "2026-10-26", 1).priority, null);
 });
