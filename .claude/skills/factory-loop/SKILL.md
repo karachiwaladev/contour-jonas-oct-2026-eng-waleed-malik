@@ -26,19 +26,28 @@ Running this skill is the user's approval for the GitHub writes below **on this 
 1. **Find work**: `gh issue list --repo <repo> --state open --json number,title,createdAt`.
    No open issues -> say so and stop.
 2. **Read it**: `gh issue view N --repo <repo> --json title,body,comments`. Read the comments too -
-   follow-up instructions often live there. If the ask is genuinely ambiguous, ask the user before acting.
-3. **Acknowledge** so the reviewers see it's picked up:
+   follow-up instructions often live there.
+3. **Acknowledge** (skip if a "Picked up" comment already exists):
    - `gh api -X POST repos/<repo>/issues/N/reactions -f content=eyes`
-   - `gh issue comment N --repo <repo> --body "👀 Picked up — working on it."`
+   - `gh issue comment N --repo <repo> --body "👀 Picked up — working on it. <!-- factory-loop:ack -->"`
+3a. **Unclear ticket? Ask on the issue, not in chat.** The ticket author watches the issue, not this
+   terminal, and the question/answer trail on GitHub is part of the scored record.
+   - Post one comment with the specific question and the options you see, ending in
+     `<!-- factory-loop:question -->`. Then move on to the next ticket - don't block the loop.
+   - On later runs: if the latest `factory-loop:question` comment has **no comment after it**, skip
+     the ticket silently (don't re-ask, don't report it as news). If someone replied, use the reply and continue.
+   - Every comment comes from the same GitHub account, so the hidden `<!-- factory-loop:... -->` markers
+     are the only way to tell the loop's own comments from the author's replies - always include them.
 4. **Do the work**:
    - Question -> answer it accurately and concisely, with the source/figure where useful.
    - Code/file change -> make it in this repo, then commit with subject `Ticket #N: <what changed>`
      (no Co-Authored-By trailer) and `git push origin main`.
 5. **Post the result** as a comment: the answer, or a short summary of what changed plus the commit SHA.
-   Lead with the answer in bold. Example:
-   `**Karachi** — largest city in Pakistan by population (~20.4M, 2023 census).`
+   Lead with the answer in bold and end with `<!-- factory-loop:result -->`. Example:
+   `**Karachi** — largest city in Pakistan by population (~20.4M, 2023 census). <!-- factory-loop:result -->`
 6. **Close**: `gh issue close N --repo <repo> --reason completed`.
-7. Report to the user in one line per ticket: number, title, answer/change, link to the result comment.
+7. Report to the user in one line per ticket: number, title, answer/change (or "asked on issue"),
+   link to the comment. If nothing changed this run, say so in one line.
 
 ## Notes
 
