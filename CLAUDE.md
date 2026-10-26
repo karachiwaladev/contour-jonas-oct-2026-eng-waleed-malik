@@ -23,18 +23,18 @@ Don't copy project detail up into this file - link to it from the index instead.
 ```
 CLAUDE.md                     # this index (keep under 100 lines)
 .claude/skills/factory-loop/  # the ticket loop
-projects/<project-slug>/      # one folder per project, each with its own README.md
+<project-slug>/               # one top-level folder per project, each with its own README.md
 ```
 
 ## Index
 
 ### Projects
 
-Each project lives in its own folder under `projects/`. Add a row here whenever one is created.
+Each project lives in its own top-level folder. Add a row here whenever one is created.
 
 | Project | Folder | What it is | Ticket |
 |---|---|---|---|
-| _(none yet)_ | | | |
+| Todo app | [`todo/`](todo/README.md) | Browser todo list (create / done / delete), IndexedDB storage | #3 |
 
 ### Skills
 
@@ -46,7 +46,8 @@ Each project lives in its own folder under `projects/`. Add a row here whenever 
 
 - **Keep this file under 100 lines at all times.** If an edit would push it over, move detail
   down into the project's folder and leave a one-line pointer here.
-- **New project = new folder** `projects/<project-slug>/` with a `README.md`, plus a row in the index.
+- **New project = new top-level folder** `<project-slug>/` (use the name the ticket gives) with a
+  `README.md`, plus a row in the index.
   Never mix two projects in one folder.
 - **Commits**: subject starts with the ticket, e.g. `Ticket #2: Add factory CLAUDE.md`; push to `main`.
 - **Unclear ticket**: ask on the GitHub issue, not in chat, then move on to the next ticket.
