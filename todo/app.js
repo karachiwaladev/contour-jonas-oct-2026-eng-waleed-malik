@@ -26,9 +26,9 @@ const state = { status: loadStatus(), tag: null, editingId: null };
 
 const handlers = {
   async onToggle(task, done) {
-    await updateTask({ ...task, done });
     // Only the not-done -> done transition spawns the next copy; un-ticking leaves it alone.
     const next = done && !task.done ? nextOccurrence(task, todayISO()) : null;
+    await updateTask({ ...task, done, ...(next && { spawnedNext: true }) });
     if (next) await addTask(next);
     render();
   },

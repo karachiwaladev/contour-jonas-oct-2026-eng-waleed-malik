@@ -27,6 +27,11 @@ test("nextOccurrence copies title, tags and repeat; new date; not done; no id", 
     repeat: { freq: "everyN", n: 2 }, createdAt: 999 });
 });
 
+test("nextOccurrence is null once this task already created its next copy (re-tick after un-tick)", () => {
+  const t1 = normalize({ id: 3, title: "Gym", done: true, dueDate: "2026-10-26", repeat: { freq: "daily" }, spawnedNext: true });
+  assert.equal(nextOccurrence(t1, "2026-10-26"), null);
+});
+
 test("nextOccurrence is null for non-recurring tasks", () => {
   assert.equal(nextOccurrence(normalize({ id: 1, title: "x", done: true, dueDate: "2026-10-26" }), "2026-10-26"), null);
 });

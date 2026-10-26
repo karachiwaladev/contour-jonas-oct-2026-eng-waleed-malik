@@ -35,7 +35,7 @@ Each project lives in its own top-level folder. Add a row here whenever one is c
 
 | Project | Folder | What it is | Ticket |
 |---|---|---|---|
-| Todo app | [`todo/`](todo/README.md) | Browser todo list: due dates, tags, status/tag filters; IndexedDB storage | #3, #4 |
+| Todo app | [`todo/`](todo/README.md) | Browser todo list: due dates, tags, filters, recurring tasks; IndexedDB storage | #3, #4, #5 |
 
 ### Skills
 

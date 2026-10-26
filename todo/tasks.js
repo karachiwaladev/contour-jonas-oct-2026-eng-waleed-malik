@@ -23,9 +23,10 @@ export function applyRepeat({ dueDate, repeat }, today) {
   return { dueDate: date, repeat: r };
 }
 
-// The copy created when a recurring task is ticked done; null for one-off tasks.
+// The copy created when a recurring task is ticked done; null for one-off tasks, and null if this
+// task already created its copy (spawnedNext) so un-tick + re-tick can't duplicate it.
 export function nextOccurrence(task, today, now = Date.now()) {
-  if (!task.repeat || !task.dueDate) return null;
+  if (!task.repeat || !task.dueDate || task.spawnedNext) return null;
   return {
     title: task.title,
     done: false,
