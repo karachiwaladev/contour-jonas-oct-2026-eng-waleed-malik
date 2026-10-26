@@ -41,10 +41,14 @@ the approach, and how it will be verified (the exact checks you'll run in the br
 
 ## 3. Build (on a branch)
 
-`git checkout -b ticket-<N>-<short-slug>` from current `main`. Build exactly the approved plan. If the
-plan turns out not to work as written, stop and post a revised plan on the issue rather than quietly
-building something different. Commit as `Ticket #N: ... (#<issue>)`. Run the project's tests and only
-commit when they pass - check the test command's exit code, not its printed output.
+`git checkout -b ticket-<N>-<short-slug>` from current `main`. Build exactly the approved plan,
+**test-first**: follow the `quality-gate` skill - turn the plan's checks into failing tests, then write
+the code until they pass, keeping to its architecture rules. If the plan turns out not to work as
+written, stop and post a revised plan on the issue rather than quietly building something different.
+Commit as `Ticket #N: ... (#<issue>)`, only when the tests pass (exit code, not printed output).
+
+Before the browser step, finish the rest of the `quality-gate` (architecture, security, review) and
+keep its ✅ list for the PR body.
 
 ## 4. Verify in the browser, then open the PR
 

@@ -57,6 +57,8 @@ it**, and closing the merged ticket. It does not extend to any other repo or sys
      screenshots. A new project gets its own top-level folder with a `README.md` and a row in the
      `CLAUDE.md` index.
    - Both (e.g. "answer X and save it to a file") -> do both.
+   - **Any code change** -> pass the `quality-gate` skill (tests first, architecture, security,
+     review) before the PR. Its ✅ list goes in the PR body.
 6. **Open the PR and wait for approval**: follow `references/pr-review.md`. It covers the PR body,
    reading the author's reply each run, making requested changes, squash-merging once approved, posting
    the result on the issue (ending `<!-- factory-loop:result -->`) and closing it. Never close a ticket
