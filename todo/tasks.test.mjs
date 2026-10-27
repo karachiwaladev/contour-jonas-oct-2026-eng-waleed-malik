@@ -139,6 +139,9 @@ test("matchesSearch: case-insensitive part of the title or any tag; # means tags
   for (const q of ["", "   ", "#", " # ", undefined, null]) assert.ok(matchesSearch(task, q), String(q));
   assert.ok(matchesSearch(t(2, { title: "x" }), "  x  "));
   assert.ok(!matchesSearch(t(3, { title: "x", tags: [] }), "#x"));
+  // Space after "#" is ignored; a bare "#" still shows tasks that have no tags.
+  assert.ok(matchesSearch(task, "#  err"));
+  assert.ok(matchesSearch(t(4, { title: "x", tags: [] }), "#"));
 });
 
 test("filterTasks: search combines with status, tag and priority", () => {
