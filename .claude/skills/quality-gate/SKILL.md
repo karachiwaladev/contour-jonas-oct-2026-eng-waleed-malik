@@ -62,10 +62,11 @@ note anything you choose not to change and why.
 
 ## Output for the PR body
 
+Every ✅ names what actually ran this time (command + exit code, or the skill invoked); anything not run is `➖ not run: <why>`, never ✅.
 ```
 ### Task eval
 - ✅ `<project>/evals/ticket-<N>.test.mjs`: 0/<n> before code (red commit <sha>) → <n>/<n> after
-- ✅ Mutation: <score>% of injected bugs in the changed files caught by tests + eval (Stryker)
+- ✅ Mutation: <score>% (tests + eval: `stryker run stryker.gate.config.json --mutate <files>`) | ➖ not run
 
 ### Quality gate
 - ✅ Tests: <n> passing (`<command>`), <n> new, written test-first from plan checks <list>

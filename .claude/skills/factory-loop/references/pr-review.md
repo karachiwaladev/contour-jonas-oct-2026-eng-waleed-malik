@@ -19,7 +19,8 @@ answers and small edits as much as to builds - the author reviews the actual cha
      `quality-gate` skill
    - Last line of text: "Approve to merge: comment **merge** (or **approved**), or comment with changes."
    - End with `<!-- factory-loop:pr -->`
-4. On the issue, comment a link to the PR (no waiting marker - the PR is where review happens).
+4. On the issue, comment a link to the PR ending `<!-- factory-loop:link -->` (not a waiting marker - the
+   PR is where review happens - but it stops evals reading the comment as the author's).
 5. `git checkout main`, so the next ticket and the Stop hook don't land on this branch.
 
 ## Each later run: check the PR

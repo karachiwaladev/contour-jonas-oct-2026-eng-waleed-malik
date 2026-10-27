@@ -26,14 +26,16 @@ and the Stop hook don't land on a ticket branch by accident.
 
 ## 1. Clarify
 
-Post one comment on the issue listing the assumptions you'd otherwise make, as numbered questions,
+This is the loop's **first** comment on the ticket (it doubles as the acknowledgement - see SKILL.md
+step 3). Post one comment on the issue listing the assumptions you'd otherwise make, as numbered questions,
 each with your proposed default so the author can answer "defaults are fine". Cover what changes the
 build: scope and must-have features, where it lives (folder), tech/stack and storage, UI expectations,
 anything the ticket leaves open. Keep it to what matters; 3-7 questions.
 
 ## 2. Plan
 
-Once the questions are answered, post a plan on the issue: what will be built, files/folders touched,
+Once the questions are answered, post a plan on the issue: what will be built, a **Files** list (every
+file/folder it expects to touch - the quality gate checks the PR against it),
 the approach, how it will be verified (the exact checks you'll run in the browser), and an **Eval**
 section: a numbered list of plain-language pass/fail checks that define "done" (one behaviour each,
 including old data and edge cases). Approving the plan approves that eval; it is the contract. End with:
@@ -72,7 +74,8 @@ Verify with the Chrome browser tools (`claude-in-chrome`, the user's already-ope
 2. `tabs_context_mcp` with `createIfEmpty: true`, open the local URL in a new tab.
 3. Exercise every check from the approved plan. Prefer real clicks/typing for the user-facing flow;
    `javascript_tool` is fine for reading state. Check `read_console_messages` with `onlyErrors: true`
-   (reload once after the first call so page-load errors are captured).
+   (reload once after the first call so page-load errors are captured). Reload with `navigate` to the
+   same URL, never `location.reload()` inside `javascript_tool`: that kills the running script.
 4. Take a screenshot of each key state with `save_to_disk: true`.
 5. Close the tab and stop the server.
 

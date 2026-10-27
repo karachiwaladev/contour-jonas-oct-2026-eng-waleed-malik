@@ -364,3 +364,15 @@ test("EV15: ticket PRs never touch the loop's own controls", () => {
   s.prs[0].files.push({ path: "todo/evals/ticket-17.test.mjs" }, { path: "CLAUDE.md" });
   assert.deepEqual(statuses(s, "EV15"), ["pass"]);
 });
+
+test("a declined ticket closed by its author is skipped, not failed", () => {
+  const s = good();
+  s.issues.push({
+    number: 31, title: "Ticket #98: footer", author: { login: "boss" }, state: "CLOSED",
+    createdAt: "2026-02-01T00:00:00Z", closedAt: "2026-02-01T01:00:00Z",
+    comments: [loop("2026-02-01T00:01:00Z", "refused")],
+  });
+  const rows = runChecks(s, cfg).filter((r) => r.subject.includes("#31"));
+  assert.deepEqual(rows.filter((r) => r.status === "fail"), []);
+  assert.ok(rows.some((r) => r.id === "EV01" && r.status === "skip" && /declined/.test(r.detail)));
+});

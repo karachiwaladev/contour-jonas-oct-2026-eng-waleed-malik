@@ -12,11 +12,13 @@ const skip = (subject, detail) => ({ subject, status: "skip", detail });
 const tickets = (snap) => snap.issues.filter((i) => ticketNo(i.title) !== null);
 const inEra = (issue, from) => issue.number >= from;
 const label = (i) => `issue #${i.number} (Ticket #${ticketNo(i.title)})`;
+// Declined by the trust gate (factory-loop:refused): nothing was built, so the build rules don't apply.
+const declined = (i) => i.comments.some((c) => hasMarker(c, "refused"));
 
 // Each ticket in the PR era, as { issue, comments (time-sorted), pr }.
 function prEra(snap, cfg, { closedOnly = false } = {}) {
   return tickets(snap)
-    .filter((i) => inEra(i, cfg.rulesFromIssue.pullRequest) && (!closedOnly || i.state === "CLOSED"))
+    .filter((i) => inEra(i, cfg.rulesFromIssue.pullRequest) && !declined(i) && (!closedOnly || i.state === "CLOSED"))
     .map((issue) => ({ issue, comments: sortByTime(issue.comments), pr: prFor(snap, issue) }));
 }
 
@@ -37,6 +39,7 @@ export const CHECKS = [
     id: "EV01", title: "Every closed ticket has a result comment",
     run: (snap, cfg) => tickets(snap).filter((i) => i.state === "CLOSED").map((i) =>
       !inEra(i, cfg.rulesFromIssue.markers) ? skip(label(i), "before markers existed")
+        : declined(i) ? skip(label(i), "declined by the trust gate")
         : i.comments.some((c) => hasMarker(c, "result")) ? pass(label(i))
           : fail(label(i), "closed without a factory-loop:result comment")),
   },
