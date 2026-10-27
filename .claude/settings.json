@@ -9,6 +9,52 @@
     "code-review@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true
   },
+  "permissions": {
+    "deny": [
+      "Edit(**/.claude/settings.json)",
+      "Edit(**/.claude/settings.local.json)",
+      "Edit(**/.claude/hooks/**)",
+      "Edit(**/.mcp.json)",
+      "Edit(**/.git/**)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.claude.json)",
+      "Read(~/.claude/.credentials.json)",
+      "Read(~/.git-credentials)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(gh auth token*)",
+      "Bash(gh auth status --show-token*)",
+      "Bash(gh secret *)",
+      "Bash(gh gist *)",
+      "Bash(gh repo delete *)",
+      "Bash(gh repo edit *)",
+      "Bash(gh api -X DELETE *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard*)",
+      "Bash(git config --global *)",
+      "Bash(rm -rf *)",
+      "Bash(npm publish*)",
+      "PowerShell(Invoke-WebRequest *)",
+      "PowerShell(Invoke-RestMethod *)",
+      "PowerShell(iwr *)",
+      "PowerShell(irm *)",
+      "PowerShell(Invoke-Expression *)",
+      "PowerShell(iex *)",
+      "PowerShell(gh auth token*)"
+    ],
+    "ask": [
+      "Edit(**/.claude/skills/**)",
+      "Edit(**/evals/**)",
+      "Edit(**/.github/**)"
+    ]
+  },
   "hooks": {
     "Stop": [
       {

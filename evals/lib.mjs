@@ -5,11 +5,15 @@ export const markers = (body = "") => [...body.matchAll(MARK)].map((m) => m[1]);
 export const hasMarker = (c, m) => markers(c.body).includes(m);
 // The loop and the author share one account, so the hidden marker is the only way to tell them apart.
 export const isLoop = (c) => markers(c.body).length > 0;
-export const isAuthor = (c) => !isLoop(c);
+// The repo is public: with a trusted list, a comment from any other account never counts as the author.
+export const isAuthor = (c, trusted) => !isLoop(c) && (!trusted || trusted.includes(c.author?.login));
 
 // Whole comment must be the approval word: "yes, but change X" is feedback, not approval.
 const APPROVAL = /^[\s*_]*(approved?|merge|lgtm|ship it|yes|go ahead|👍)[\s*_.!]*$/i;
-export const isApproval = (c) => isAuthor(c) && APPROVAL.test(c.body.trim());
+export const isApproval = (c, trusted) => isAuthor(c, trusted) && APPROVAL.test(c.body.trim());
+
+// The loop's own controls: a ticket PR that touches these could weaken every later ticket.
+export const isControlFile = (path) => /^(\.claude|evals|\.github)\/|^\.mcp\.json$/.test(path);
 
 export const ticketNo = (title) => { const m = /^Ticket #(\d+)/.exec(title); return m ? Number(m[1]) : null; };
 export const closesIssue = (body = "") => { const m = /\bCloses #(\d+)/i.exec(body); return m ? Number(m[1]) : null; };

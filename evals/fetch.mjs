@@ -48,7 +48,7 @@ function imageExists(repo, url) {
 
 export function fetchSnapshot(repo, root) {
   const issues = gh("issue", "list", "--repo", repo, "--state", "all", "--limit", "500",
-    "--json", "number,title,state,createdAt,closedAt,comments");
+    "--json", "number,title,author,state,createdAt,closedAt,comments");
   // Per PR: asking for commits/files on the list call exceeds GitHub's GraphQL node limit.
   const prs = gh("pr", "list", "--repo", repo, "--state", "all", "--limit", "500", "--json", "number")
     .map(({ number }) => gh("pr", "view", String(number), "--repo", repo,
