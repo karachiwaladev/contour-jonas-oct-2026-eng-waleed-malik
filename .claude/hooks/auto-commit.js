@@ -22,6 +22,18 @@ const real = changed.filter((l) => !l.endsWith(".claude/logs/prompts.jsonl"));
 if (!real.length) process.exit(0);
 
 git("add", "-A");
+// Never auto-push the loop's own controls (same list as evals/lib.mjs isControlFile): an edit a ticket
+// slipped past the deny rules (e.g. via a shell command) must not ship silently. Commit those by hand.
+const CONTROL = /^(\.claude\/(?!logs\/)|evals\/|\.github\/|\.mcp\.json$)/;
+const held = git("diff", "--cached", "--name-only").split("\n").filter((f) => CONTROL.test(f));
+if (held.length) git("reset", "-q", "--", ...held);
+const heldNote = held.length ? ` Held back for a manual commit: ${held.join(", ")}.` : "";
+if (!git("diff", "--cached", "--name-only").split("\n").some((f) => f && !f.endsWith(".claude/logs/prompts.jsonl"))) {
+  git("reset", "-q");
+  if (heldNote) say(`Auto-commit skipped.${heldNote}`);
+  process.exit(0);
+}
+
 const diff = git("diff", "--cached");
 // Last line of defence for the "no real keys" rule: GitHub tokens, AWS keys, private keys.
 if (/gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(diff)) {
@@ -36,7 +48,7 @@ const sha = git("rev-parse", "--short", "HEAD");
 
 try {
   git("push", "-q", "origin", "HEAD");
-  say(`Auto-committed and pushed ${sha} (${files.length} file${files.length === 1 ? "" : "s"}).`);
+  say(`Auto-committed and pushed ${sha} (${files.length} file${files.length === 1 ? "" : "s"}).${heldNote}`);
 } catch (e) {
   say(`Auto-committed ${sha} but push failed: ${String(e.stderr || e.message).trim().split("\n")[0]}`);
 }

@@ -1,7 +1,10 @@
 {
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
-      "source": { "source": "github", "repo": "anthropics/claude-plugins-official" }
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
     }
   },
   "enabledPlugins": {
@@ -26,6 +29,12 @@
       "Read(**/.env.*)",
       "Bash(curl *)",
       "Bash(wget *)",
+      "Bash(* | sh*)",
+      "Bash(* | bash*)",
+      "Bash(*|sh*)",
+      "Bash(*|bash*)",
+      "Bash(cat *.env*)",
+      "Bash(type *.env*)",
       "Bash(ssh *)",
       "Bash(scp *)",
       "Bash(gh auth token*)",
@@ -40,6 +49,8 @@
       "Bash(git reset --hard*)",
       "Bash(git config --global *)",
       "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(sudo rm -rf *)",
       "Bash(npm publish*)",
       "PowerShell(Invoke-WebRequest *)",
       "PowerShell(Invoke-RestMethod *)",
@@ -47,6 +58,9 @@
       "PowerShell(irm *)",
       "PowerShell(Invoke-Expression *)",
       "PowerShell(iex *)",
+      "PowerShell(* | iex*)",
+      "PowerShell(Get-Content *.env*)",
+      "PowerShell(Remove-Item * -Recurse -Force*)",
       "PowerShell(gh auth token*)"
     ],
     "ask": [
@@ -63,6 +77,18 @@
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-commit.js\"",
             "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|Write|Grep|Glob|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.js\"",
+            "timeout": 10
           }
         ]
       }
