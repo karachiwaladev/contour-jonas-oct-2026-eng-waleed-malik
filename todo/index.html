@@ -14,6 +14,7 @@
       <div class="row">
         <input id="due" type="date" aria-label="Due date">
         <input id="tags" type="text" placeholder="Tags, comma-separated" aria-label="Tags" autocomplete="off">
+        <span id="priority-slot"></span>
         <span id="repeat-slot"></span>
         <button type="submit">Add</button>
       </div>
@@ -24,6 +25,12 @@
         <button type="button" data-status="all">All</button>
         <button type="button" data-status="active">Active</button>
         <button type="button" data-status="completed">Completed</button>
+      </div>
+      <div id="priority-filter" role="group" aria-label="Filter by priority">
+        <button type="button" data-priority="all">All</button>
+        <button type="button" data-priority="high">High</button>
+        <button type="button" data-priority="medium">Medium</button>
+        <button type="button" data-priority="low">Low</button>
       </div>
       <div id="tag-filter" role="group" aria-label="Filter by tag"></div>
     </div>

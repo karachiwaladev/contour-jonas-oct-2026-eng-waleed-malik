@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { setupDom } from "./test-dom.mjs";
 
 setupDom();
-const { el, repeatPicker, renderTask, renderEditor } = await import("./render.js");
+const { el, repeatPicker, priorityPicker, renderTask, renderEditor } = await import("./render.js");
 const { normalize } = await import("./tasks.js");
 
 const task = (extra = {}) => normalize({ id: 1, title: "Water plants", done: false, createdAt: 1, ...extra });
@@ -98,7 +98,7 @@ test("renderEditor: prefilled fields; Save sends edited values, Cancel reports c
   tags.value = "x";
   li.querySelector("form").dispatchEvent(new window.Event("submit", { cancelable: true }));
   li.querySelector("button.secondary").click();
-  assert.deepEqual(log[0], ["onSave", t, { dueDate: null, tags: "x", repeat: { freq: "daily", n: "2", anchorDay: undefined } }]);
+  assert.deepEqual(log[0], ["onSave", t, { dueDate: null, tags: "x", repeat: { freq: "daily", n: "2", anchorDay: undefined }, priority: null }]);
   assert.equal(log[1][0], "onCancel");
 });
 
@@ -107,4 +107,30 @@ test("renderEditor: a task with no date or tags opens with empty fields", () => 
   const [date, tags] = li.querySelectorAll("input");
   assert.equal(date.value, "");
   assert.equal(tags.value, "");
+});
+
+test("priorityPicker: No priority + High/Medium/Low, starts at the given value", () => {
+  const s = priorityPicker(null);
+  assert.equal(s.getAttribute("aria-label"), "Priority");
+  assert.deepEqual([...s.options].map((o) => [o.value, o.textContent]), [["", "No priority"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]);
+  assert.equal(s.value, "");
+  assert.equal(priorityPicker("medium").value, "medium");
+});
+
+test("renderTask: priority badge with its level as class; none when no priority", () => {
+  const li = renderTask(task({ priority: "high" }), noop);
+  const b = li.querySelector(".priority");
+  assert.equal(b.textContent, "High");
+  assert.equal(b.className, "priority high");
+  assert.equal(renderTask(task(), noop).querySelector(".priority"), null);
+});
+
+test("renderEditor: priority starts at the task's value and is sent on Save (empty = null)", () => {
+  const { h, log } = calls();
+  const li = renderEditor(task({ priority: "low" }), h);
+  const sel = li.querySelector('select[aria-label="Priority"]');
+  assert.equal(sel.value, "low");
+  sel.value = "";
+  li.querySelector("form").dispatchEvent(new window.Event("submit", { cancelable: true }));
+  assert.equal(log[0][2].priority, null);
 });

@@ -1,6 +1,6 @@
 // DOM building only: turns task data into elements and reports user intent through handlers.
 // No storage or app state here - app.js owns both.
-import { isOverdue } from "./tasks.js";
+import { isOverdue, PRIORITIES } from "./tasks.js";
 import { FREQUENCIES, repeatLabel } from "./recurrence.js";
 
 export const el = (tag, props = {}, ...children) => {
@@ -12,6 +12,17 @@ export const el = (tag, props = {}, ...children) => {
 const labelled = (node, label) => { node.setAttribute("aria-label", label); return node; };
 
 const FREQ_TEXT = { none: "Doesn't repeat", daily: "Daily", weekly: "Weekly", monthly: "Monthly", everyN: "Every N days" };
+
+const PRIORITY_TEXT = { high: "High", medium: "Medium", low: "Low" };
+
+// "" means no priority; callers turn it into null.
+export function priorityPicker(priority) {
+  const select = labelled(el("select", { className: "priority-select" }), "Priority");
+  select.append(el("option", { value: "", textContent: "No priority" }));
+  for (const p of PRIORITIES) select.append(el("option", { value: p, textContent: PRIORITY_TEXT[p] }));
+  select.value = priority || "";
+  return select;
+}
 
 // Select + "N" box (shown only for every-N). Returns the element and a reader for its value.
 export function repeatPicker(repeat, idPrefix = "") {
@@ -36,6 +47,7 @@ export function renderTask(task, { onToggle, onEdit, onDelete }) {
   box.addEventListener("change", () => onToggle(task, box.checked));
 
   const meta = el("div", { className: "meta" });
+  if (task.priority) meta.append(el("span", { className: `priority ${task.priority}`, textContent: PRIORITY_TEXT[task.priority] }));
   if (task.dueDate) {
     meta.append(el("span", { className: "due", textContent: `${isOverdue(task) ? "Overdue · " : "Due "}${task.dueDate}` }));
   }
@@ -55,16 +67,17 @@ export function renderEditor(task, { onSave, onCancel }) {
   const due = labelled(el("input", { type: "date", value: task.dueDate || "" }), "Edit due date");
   const tags = labelled(el("input", { type: "text", value: task.tags.join(", "), placeholder: "Tags, comma-separated" }), "Edit tags");
   const repeat = repeatPicker(task.repeat, "edit");
+  const priority = priorityPicker(task.priority);
 
   const cancel = el("button", { type: "button", className: "secondary", textContent: "Cancel" });
   cancel.addEventListener("click", onCancel);
 
   const form = el("form", { className: "editor" },
-    el("span", { className: "title", textContent: task.title }), due, tags, repeat.node,
+    el("span", { className: "title", textContent: task.title }), due, tags, priority, repeat.node,
     el("button", { type: "submit", textContent: "Save" }), cancel);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    onSave(task, { dueDate: due.value || null, tags: tags.value, repeat: repeat.read() });
+    onSave(task, { dueDate: due.value || null, tags: tags.value, repeat: repeat.read(), priority: priority.value || null });
   });
   return el("li", { className: "editing" }, form);
 }
