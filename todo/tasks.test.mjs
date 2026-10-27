@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalize, parseTags, todayISO, isOverdue, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence, PRIORITIES, normalizePriority } from "./tasks.js";
+import { normalize, parseTags, todayISO, isOverdue, sortTasks, filterTasks, allTags, applyRepeat, nextOccurrence, PRIORITIES, normalizePriority, matchesSearch } from "./tasks.js";
 
 const t = (id, extra = {}) => normalize({ id, title: `t${id}`, done: false, createdAt: id, ...extra });
 
@@ -128,4 +128,27 @@ test("nextOccurrence keeps the priority", () => {
   assert.equal(nextOccurrence(done, "2026-10-26", 1).priority, "high");
   const plain = normalize({ id: 8, title: "Walk", done: true, dueDate: "2026-10-26", repeat: { freq: "daily" } });
   assert.equal(nextOccurrence(plain, "2026-10-26", 1).priority, null);
+});
+
+test("matchesSearch: case-insensitive part of the title or any tag; # means tags only", () => {
+  const task = t(1, { title: "Buy MILK", tags: ["home", "errands"] });
+  for (const q of ["milk", "MiL", "buy m", "hom", "rands"]) assert.ok(matchesSearch(task, q), q);
+  for (const q of ["cows", "#milk", "#work", "milks"]) assert.ok(!matchesSearch(task, q), q);
+  assert.ok(matchesSearch(task, "#ERR"));
+  // Empty, spaces, or a bare "#" means no search.
+  for (const q of ["", "   ", "#", " # ", undefined, null]) assert.ok(matchesSearch(task, q), String(q));
+  assert.ok(matchesSearch(t(2, { title: "x" }), "  x  "));
+  assert.ok(!matchesSearch(t(3, { title: "x", tags: [] }), "#x"));
+});
+
+test("filterTasks: search combines with status, tag and priority", () => {
+  const tasks = [t(1, { title: "Milk", tags: ["work"], priority: "high" }), t(2, { title: "Milk", done: true }),
+    t(3, { title: "Bread", tags: ["work"] }), t(4, { title: "Walk" })];
+  const ids = (f) => filterTasks(tasks, f).map((x) => x.id);
+  assert.deepEqual(ids({ search: "milk" }), [1, 2]);
+  assert.deepEqual(ids({ search: "milk", status: "active" }), [1]);
+  assert.deepEqual(ids({ search: "#work", priority: "high" }), [1]);
+  assert.deepEqual(ids({ search: "#work", tag: "work" }), [1, 3]);
+  assert.deepEqual(ids({ search: "" }), [1, 2, 3, 4]);
+  assert.deepEqual(ids({}), [1, 2, 3, 4]);
 });

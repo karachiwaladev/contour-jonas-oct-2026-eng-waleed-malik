@@ -7,6 +7,7 @@ const form = document.getElementById("new-task");
 const titleInput = document.getElementById("title");
 const dueInput = document.getElementById("due");
 const tagsInput = document.getElementById("tags");
+const searchInput = document.getElementById("search");
 const statusFilter = document.getElementById("status-filter");
 const priorityFilter = document.getElementById("priority-filter");
 const tagFilter = document.getElementById("tag-filter");
@@ -25,7 +26,8 @@ const loadStatus = () => {
 };
 const saveStatus = (s) => { try { localStorage.setItem(STATUS_KEY, s); } catch {} };
 
-const state = { status: loadStatus(), tag: null, priority: "all", editingId: null };
+// search isn't saved: a reload starts with an empty box (approved plan, issue #11).
+const state = { status: loadStatus(), tag: null, priority: "all", search: "", editingId: null };
 
 const handlers = {
   async onToggle(task, done) {
@@ -71,6 +73,12 @@ async function render() {
   else if (!shown.length) count.textContent = "No tasks match these filters";
   else count.textContent = `${shown.length} of ${tasks.length} shown · ${tasks.filter((t) => !t.done).length} left`;
 }
+
+const setSearch = (value) => { state.search = value; render(); };
+const clearSearch = () => { searchInput.value = ""; setSearch(""); };
+searchInput.addEventListener("input", () => setSearch(searchInput.value));
+searchInput.addEventListener("keydown", (e) => { if (e.key === "Escape") clearSearch(); });
+document.getElementById("search-clear").addEventListener("click", () => { clearSearch(); searchInput.focus(); });
 
 statusFilter.addEventListener("click", (e) => {
   const status = e.target.dataset && e.target.dataset.status;

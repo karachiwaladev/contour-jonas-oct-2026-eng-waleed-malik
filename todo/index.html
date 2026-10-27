@@ -21,6 +21,10 @@
     </form>
 
     <div class="filters">
+      <div id="search-row">
+        <input id="search" type="search" placeholder="Search title or tag (#tag for tags only)" aria-label="Search tasks" autocomplete="off">
+        <button type="button" id="search-clear" class="secondary" aria-label="Clear search">×</button>
+      </div>
       <div id="status-filter" role="group" aria-label="Filter by status">
         <button type="button" data-status="all">All</button>
         <button type="button" data-status="active">Active</button>

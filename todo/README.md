@@ -9,6 +9,8 @@ Features:
 - Mark done (checkbox), edit due date/tags/priority inline, delete
 - Filter by status (**All / Active / Completed**, remembered across reloads), by **priority** and by **tag**
   (click a chip; click again to clear). All three filters combine.
+- **Search** box: filters as you type by part of the title or a tag, ignoring case (`#wor` searches tags
+  only). Combines with the filters; × or Esc clears it. Not remembered across reloads.
 - Sorted by due date (soonest first, undated last); same date: High, Medium, Low, then no priority;
   **overdue** tasks are highlighted red
 - **Recurring tasks**: repeat daily, weekly, monthly or every N days. Ticking one done keeps it as
@@ -42,7 +44,7 @@ npm run mutation   # Stryker: mutates the code, checks the tests catch it (~13 m
 - `index.html`: the page
 - `app.js`: app state and event wiring
 - `render.js`: builds the task rows, inline editor, repeat and priority pickers (DOM only)
-- `tasks.js`: pure task logic (normalize, tags, priority, overdue, sort, filter, next occurrence), unit-tested
+- `tasks.js`: pure task logic (normalize, tags, priority, overdue, sort, filter, search, next occurrence), unit-tested
 - `recurrence.js`: pure date maths for repeats (next date, skip-ahead, month ends), unit-tested
 - `tasks.test.mjs`, `recurrence.test.mjs`: unit tests for the pure logic
 - `db.test.mjs`, `render.test.mjs`, `app.test.mjs`: storage, DOM building and whole-page tests (jsdom + fake-indexeddb)
