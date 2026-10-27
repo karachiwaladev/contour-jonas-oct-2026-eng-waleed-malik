@@ -44,6 +44,7 @@ Each project lives in its own top-level folder. Add a row here whenever one is c
 |---|---|---|
 | factory-loop | `.claude/skills/factory-loop/SKILL.md` | Picking up, doing, commenting on and closing tickets; run as `/loop 5m factory-loop` (a 1-minute loop cost ~1.4M tokens/run, mostly idle) |
 | quality-gate | `.claude/skills/quality-gate/SKILL.md` | Tests first, architecture, security and review before any PR |
+| persona-sweep | `.claude/skills/persona-sweep/SKILL.md` | On demand: 12 personas from [`todo/personas.yaml`](todo/personas.yaml) (incl. blind and malicious) test the app in Chrome, one sub-agent each |
 | (evals) | [`evals/README.md`](evals/README.md) | `node evals/run.mjs`: 15 deterministic checks on the GitHub/git record (no AI judging); task evals per ticket in `<project>/evals/` |
 
 Plugins the loop relies on (declared in `.claude/settings.json`): `superpowers` (TDD, plans,
