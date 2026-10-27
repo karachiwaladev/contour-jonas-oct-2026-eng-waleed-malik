@@ -11,7 +11,24 @@ Each persona runs as **one Claude sub-agent driving its own tab** in the user's 
 (`claude-in-chrome`). No API key and no third-party tool holding the user's Claude token.
 On demand only: it costs a sub-agent per persona.
 
-## Each sweep
+## Fast lane: Jev (seconds, fractions of a cent)
+
+[`todo/e2e/personas.spec.mjs`](../../../todo/e2e/personas.spec.mjs) holds each persona's core goal as a
+QuickE2E flow (`D:\projects\quicke2e`, reference implementation). Jev, TypeSafe's small decision model,
+picks each click from the page's legal moves; the spec's assertions decide pass/fail. Run it first, on every
+UI change; the Claude lane below is for judgement calls Jev can't make (wording, focus, contrast).
+
+- One-time, by the user: `cd D:\projects\quicke2e && npm install && npx playwright install chromium`.
+- Key: the `jev` engine reads `OPENROUTER_API_KEY` from the environment (never from a file the agent opens,
+  never pasted in chat). Serve the app (step 1 below), then:
+  `node D:\projects\quicke2e\bin\quicke2e.mjs check todo/e2e/personas.spec.mjs --base http://127.0.0.1:5181`
+  `node D:\projects\quicke2e\bin\quicke2e.mjs run todo/e2e/personas.spec.mjs --base http://127.0.0.1:5181 --engine jev --json --headless`
+- Exit 0 = all passed; read the last stdout line (JSON) for `outcome` and `assertions` of any failure.
+  Exit 2 with "rejected the API key" = wrong key or endpoint, not an app bug.
+- Limits (QuickE2E): one action at a time, so no double-submit races (that duplicate bug needs the Claude lane
+  or a unit test); every typed value comes from `inputs`, so Jev can't improvise payloads - Mal's go in the spec.
+
+## Deep lane: Claude sub-agents
 
 1. **Serve the branch under test, one port per persona.** IndexedDB is per origin, so personas sharing
    a port would see (and the malicious one would wreck) each other's tasks. Check out the branch in a
