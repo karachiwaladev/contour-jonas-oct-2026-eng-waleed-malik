@@ -13,6 +13,11 @@ button.secondary { background: #e5e7eb; color: #1f2328; }
 button.danger { background: #e5484d; }
 
 .filters { display: grid; gap: 8px; margin: 16px 0 8px; }
+#search-row { display: flex; gap: 6px; }
+#search { flex: 1; padding: 9px 10px; border: 1px solid #c9ced6; border-radius: 6px; font: inherit; }
+#search-clear { padding: 6px 12px; }
+/* type=search adds Chrome's own × next to #search-clear; keep one. */
+#search::-webkit-search-cancel-button { display: none; }
 #status-filter, #priority-filter { display: flex; gap: 4px; flex-wrap: wrap; }
 #status-filter button, #priority-filter button { background: #e5e7eb; color: #1f2328; padding: 6px 12px; font-size: 14px; }
 #status-filter button[aria-pressed="true"], #priority-filter button[aria-pressed="true"] { background: #1f2328; color: #fff; }

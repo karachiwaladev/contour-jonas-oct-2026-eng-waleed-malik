@@ -73,13 +73,24 @@ export function sortTasks(tasks) {
   });
 }
 
-export function filterTasks(tasks, { status = "all", tag = null, priority = "all" } = {}) {
+// Case-insensitive substring of the title or any tag; a leading "#" searches tags only.
+// Blank (or a bare "#") matches everything.
+export function matchesSearch(task, query) {
+  let q = String(query ?? "").trim().toLowerCase();
+  const tagsOnly = q.startsWith("#");
+  if (tagsOnly) q = q.slice(1).trim();
+  if (!q) return true;
+  const inTags = task.tags.some((tag) => tag.toLowerCase().includes(q));
+  return tagsOnly ? inTags : inTags || task.title.toLowerCase().includes(q);
+}
+
+export function filterTasks(tasks, { status = "all", tag = null, priority = "all", search = "" } = {}) {
   return tasks.filter((t) => {
     if (status === "active" && t.done) return false;
     if (status === "completed" && !t.done) return false;
     if (tag && !t.tags.includes(tag)) return false;
     if (priority !== "all" && t.priority !== priority) return false;
-    return true;
+    return matchesSearch(t, search);
   });
 }
 
