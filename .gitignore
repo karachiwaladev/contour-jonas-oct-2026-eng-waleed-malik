@@ -1,0 +1,6 @@
+# Secrets never go to GitHub: the Stop hook runs `git add -A` on every reply.
+.env
+.env.*
+!.env.example
+node_modules/
+todo/reports/
